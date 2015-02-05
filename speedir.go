@@ -14,30 +14,24 @@ const (
 )
 
 func main() {
-	// Listen for incoming connections.
 	l, err := net.Listen(ListenType, ":"+ListenPort)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Close the listener when the application closes.
 	defer l.Close()
 	fmt.Println("Listening on :" + ListenPort)
 	for {
-		// Listen for an incoming connection.
 		conn, err := l.Accept()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		//logs an incoming message
 		log.Printf("Received message %s -> %s \n", conn.RemoteAddr(), conn.LocalAddr())
 
-		// Handle connections in a new goroutine.
 		go handleRequest(conn)
 	}
 }
 
-// Handles incoming requests.
 func handleRequest(conn net.Conn) {
 	defer conn.Close()
 
@@ -80,6 +74,5 @@ func handleRequest(conn net.Conn) {
 					"password:", pass)
 			}
 		}
-
 	}
 }
