@@ -59,20 +59,14 @@ func handleRequest(conn net.Conn) {
 			version := response.Children[0].Value.(uint64)
 			name := response.Children[1].Value.(string)
 			auth := response.Children[2]
-			pass := ""
-
-			//tag == 0 (I think) indicates simple auth
-			//tag == 3 should be SASL once we support SSL/TLS
-			if auth.Tag == 0 {
-				pass = auth.Data.String()
-				fmt.Println("ApplicationBindRequest:",
-					"messageID:", messageID,
-					//"response", response,
-					"LDAP version:", version,
-					"username:", name,
-					//"auth", auth,
-					"password:", pass)
-			}
+			pass := auth.Data.String()
+			log.Println("ApplicationBindRequest:",
+				"messageID:", messageID,
+				//"response", response,
+				"LDAP version:", version,
+				"username:", name,
+				//"auth", auth,
+				"password:", pass)
 		}
 	}
 }
