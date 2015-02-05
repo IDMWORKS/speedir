@@ -51,6 +51,12 @@ func handleRequest(conn net.Conn) {
 
 	packet := ber.DecodePacket(buf)
 
+	if len(packet.Children) == 0 {
+		//handles TLS requests over non-TLS and vice-versa
+		log.Println("Error decoding asn1-ber packet: wrong port?")
+		return
+	}
+
 	messageID := packet.Children[0].Value.(uint64)
 	response := packet.Children[1]
 
