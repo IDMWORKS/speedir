@@ -33,8 +33,11 @@ func parsePacket(conn net.Conn, packet *ber.Packet) {
 
 	if response.ClassType == ber.ClassApplication &&
 		response.TagType == ber.TypeConstructed {
-		if response.Tag == ldap.ApplicationBindRequest {
+		switch response.Tag {
+		case ldap.ApplicationBindRequest:
 			handleBindRequest(messageID, response)
+		default:
+			log.Println("LDAPv3 app code not implemented:", response.Tag)
 		}
 	}
 }
