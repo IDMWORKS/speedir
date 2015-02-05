@@ -17,8 +17,7 @@ func main() {
 	// Listen for incoming connections.
 	l, err := net.Listen(ListenType, ":"+ListenPort)
 	if err != nil {
-		fmt.Println("Error listening:", err.Error())
-		os.Exit(1)
+		log.Fatal(err)
 	}
 	// Close the listener when the application closes.
 	defer l.Close()
@@ -27,12 +26,11 @@ func main() {
 		// Listen for an incoming connection.
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Println("Error accepting: ", err.Error())
-			os.Exit(1)
+			log.Fatal(err)
 		}
 
 		//logs an incoming message
-		fmt.Printf("Received message %s -> %s \n", conn.RemoteAddr(), conn.LocalAddr())
+		log.Printf("Received message %s -> %s \n", conn.RemoteAddr(), conn.LocalAddr())
 
 		// Handle connections in a new goroutine.
 		go handleRequest(conn)
@@ -46,7 +44,7 @@ func handleRequest(conn net.Conn) {
 	buf := make([]byte, 1024)
 	_, err := conn.Read(buf)
 	if err != nil {
-		fmt.Println("Error reading:", err.Error())
+		log.Println("Error reading:", err.Error())
 	}
 
 	packet := ber.DecodePacket(buf)
