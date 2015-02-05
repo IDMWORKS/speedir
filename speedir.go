@@ -1,25 +1,55 @@
 package main
 
 import (
-	"fmt"
+	"crypto/tls"
+	"log"
+	"net"
+	"strconv"
+
 	"github.com/mmitton/asn1-ber"
 	"github.com/mmitton/ldap"
-	"net"
-	"os"
 )
 
 const (
-	ListenPort = "3333"
-	ListenType = "tcp"
+	listenTCPPort = 3333
+	listenTLSPort = 3334
+	listenType    = "tcp"
 )
 
 func main() {
-	l, err := net.Listen(ListenType, ":"+ListenPort)
+	//start first TCP server in a goroutine
+	go serveTCP(listenTCPPort, false)
+	//start second TCP (TLS) server in the main thread
+	serveTCP(listenTLSPort, true)
+}
+
+func serveTCP(port int, secure bool) {
+	service := "0.0.0.0:" + strconv.Itoa(port)
+	tlsFlag := "TCP"
+	var err error
+	var l net.Listener
+
+	if secure {
+		//cert generation tool: http://golang.org/src/crypto/tls/generate_cert.go
+		cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		config := tls.Config{Certificates: []tls.Certificate{cert}}
+		l, err = tls.Listen(listenType, service, &config)
+		tlsFlag = "TLS"
+	} else {
+		l, err = net.Listen(listenType, service)
+	}
+
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	defer l.Close()
-	fmt.Println("Listening on :" + ListenPort)
+	log.Println("Listening on", service, "("+tlsFlag+")")
+
 	for {
 		conn, err := l.Accept()
 		if err != nil {
