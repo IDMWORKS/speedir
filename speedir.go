@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"net"
-	"os"
-
 	"github.com/mmitton/asn1-ber"
 	"github.com/mmitton/ldap"
+	"net"
+	"os"
 )
 
 const (
