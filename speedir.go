@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/nwoolls/speedir/datacontext"
-	"github.com/nwoolls/speedir/processor"
-	"github.com/nwoolls/speedir/server"
+	"github.com/idmworks/speedir/datacontext"
+	"github.com/idmworks/speedir/processor"
+	"github.com/idmworks/speedir/server"
 )
 
 const (

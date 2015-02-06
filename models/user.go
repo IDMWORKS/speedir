@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"io"
 
-	"github.com/nwoolls/speedir/errors"
+	"github.com/idmworks/speedir/errors"
 	"golang.org/x/crypto/pbkdf2"
 )
 

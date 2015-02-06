@@ -6,7 +6,7 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/nwoolls/speedir/errors"
+	"github.com/idmworks/speedir/errors"
 )
 
 const (

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	_ "github.com/lib/pq" //_ = imported for side effects
-	"github.com/nwoolls/speedir/errors"
-	"github.com/nwoolls/speedir/models"
+	"github.com/idmworks/speedir/errors"
+	"github.com/idmworks/speedir/models"
 	"gopkg.in/gorp.v1"
 )
 

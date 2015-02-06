@@ -6,8 +6,8 @@ import (
 
 	"github.com/mmitton/asn1-ber"
 	"github.com/mmitton/ldap"
-	"github.com/nwoolls/speedir/errors"
-	"github.com/nwoolls/speedir/models"
+	"github.com/idmworks/speedir/errors"
+	"github.com/idmworks/speedir/models"
 	"gopkg.in/gorp.v1"
 )
 
