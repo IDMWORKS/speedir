@@ -1,18 +1,13 @@
 package datacontext
 
 import (
+	"database/sql"
 	"time"
 
+	_ "github.com/lib/pq" //_ = imported for side effects
 	"github.com/nwoolls/speedir/errors"
 	"github.com/nwoolls/speedir/models"
-
-	"database/sql"
-
 	"golang.org/x/crypto/bcrypt"
-
-	//_ to prevent golint from removing the import
-	_ "github.com/lib/pq"
-
 	"gopkg.in/gorp.v1"
 )
 
