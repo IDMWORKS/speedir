@@ -6,8 +6,8 @@ import (
 
 	"github.com/mmitton/asn1-ber"
 	"github.com/mmitton/ldap"
-	"github.com/nwoolls/speedir/datacontext"
 	"github.com/nwoolls/speedir/errors"
+	"github.com/nwoolls/speedir/models"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gorp.v1"
 )
@@ -61,7 +61,7 @@ func handleBindRequest(messageID uint64, response *ber.Packet) {
 		"\n\tusername:", username,
 		"\n\tpassword:", "********")
 
-	var users []datacontext.User
+	var users []models.User
 	_, err := DbMap.Select(&users, "select * from users where username=$1", username)
 	errors.CheckErr(err, "Select failed")
 	if len(users) == 1 {

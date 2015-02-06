@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/nwoolls/speedir/errors"
+	"github.com/nwoolls/speedir/models"
 
 	"database/sql"
 
@@ -21,14 +22,6 @@ const (
 	saltSize      = 16
 )
 
-//User model in the DB
-type User struct {
-	Id           int64
-	Created      int64
-	Username     string
-	PasswordHash string
-}
-
 //InitDb creates / updates the DB schema as needed
 func InitDb() *gorp.DbMap {
 	db, err := sql.Open("postgres", "user=speedir dbname=speedir sslmode=disable")
@@ -36,7 +29,7 @@ func InitDb() *gorp.DbMap {
 
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
 
-	dbmap.AddTableWithName(User{}, "users").SetKeys(true, "Id")
+	dbmap.AddTableWithName(models.User{}, "users").SetKeys(true, "Id")
 
 	err = dbmap.CreateTablesIfNotExists()
 	errors.CheckErr(err, "Create tables failed")
@@ -53,7 +46,7 @@ func SeedDb(dbmap *gorp.DbMap) {
 		passwordHash, err := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
 		errors.CheckErr(err, "bcrypt.GenerateFromPassword failed")
 
-		admin := User{
+		admin := models.User{
 			Created:      time.Now().UnixNano(),
 			Username:     adminUsername,
 			PasswordHash: string(passwordHash),
