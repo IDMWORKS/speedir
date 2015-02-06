@@ -7,7 +7,6 @@ import (
 	_ "github.com/lib/pq" //_ = imported for side effects
 	"github.com/nwoolls/speedir/errors"
 	"github.com/nwoolls/speedir/models"
-	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gorp.v1"
 )
 
@@ -37,14 +36,11 @@ func SeedDb(dbmap *gorp.DbMap) {
 	errors.CheckErr(err, "SelectInt failed")
 
 	if count == 0 {
-		passwordHash, err := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
-		errors.CheckErr(err, "bcrypt.GenerateFromPassword failed")
-
 		admin := models.User{
-			Created:      time.Now().UnixNano(),
-			Username:     adminUsername,
-			PasswordHash: string(passwordHash),
+			Created:  time.Now().UnixNano(),
+			Username: adminUsername,
 		}
+		admin.SetPassword(adminPassword)
 
 		err = dbmap.Insert(&admin)
 		errors.CheckErr(err, "Insert failed")

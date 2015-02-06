@@ -8,7 +8,6 @@ import (
 	"github.com/mmitton/ldap"
 	"github.com/nwoolls/speedir/errors"
 	"github.com/nwoolls/speedir/models"
-	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gorp.v1"
 )
 
@@ -66,8 +65,8 @@ func handleBindRequest(messageID uint64, response *ber.Packet) {
 	errors.CheckErr(err, "Select failed")
 	if len(users) == 1 {
 		log.Println("User found:", username)
-		err = bcrypt.CompareHashAndPassword([]byte(users[0].PasswordHash), []byte(password))
-		if err == nil {
+
+		if users[0].ComparePassword(password) {
 			log.Println("Password for user valid:", username)
 		} else {
 			log.Println("Password for user invalid:", username)
