@@ -22,3 +22,10 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+# Certs
+*.pem
+
+# Artifacts
+speedir
+
