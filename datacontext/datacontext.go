@@ -14,7 +14,6 @@ import (
 const (
 	adminUsername = "admin"
 	adminPassword = "admin"
-	saltSize      = 16
 )
 
 //InitDb creates / updates the DB schema as needed
