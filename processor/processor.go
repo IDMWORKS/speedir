@@ -1,4 +1,4 @@
-package main
+package processor
 
 import (
 	"log"
@@ -8,7 +8,8 @@ import (
 	"github.com/mmitton/ldap"
 )
 
-func handleRequest(conn net.Conn) {
+//HandleRequest handles incoming LDAPv3 requests
+func HandleRequest(conn net.Conn) {
 	defer conn.Close()
 
 	buf := make([]byte, 1024)
@@ -49,9 +50,7 @@ func handleBindRequest(messageID uint64, response *ber.Packet) {
 	pass := auth.Data.String()
 	log.Println("ApplicationBindRequest:",
 		"messageID:", messageID,
-
 		"LDAP version:", version,
 		"username:", name,
-
 		"password:", pass)
 }

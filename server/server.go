@@ -1,10 +1,12 @@
-package main
+package server
 
 import (
 	"crypto/tls"
 	"log"
 	"net"
 	"strconv"
+
+	"github.com/nwoolls/speedir/errors"
 )
 
 const (
@@ -13,7 +15,8 @@ const (
 
 type requestHandler func(conn net.Conn)
 
-func serveTCP(port int, secure bool, handler requestHandler) {
+//ServeTCP starts a TCP server on port, optionally secure with a requestHandler
+func ServeTCP(port int, secure bool, handler requestHandler) {
 	service := "0.0.0.0:" + strconv.Itoa(port)
 	tlsFlag := "TCP"
 	var err error
@@ -22,9 +25,7 @@ func serveTCP(port int, secure bool, handler requestHandler) {
 	if secure {
 		//cert generation tool: http://golang.org/src/crypto/tls/generate_cert.go
 		cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
-		if err != nil {
-			log.Fatal(err)
-		}
+		errors.CheckErr(err, "Load key pair failed")
 
 		config := tls.Config{Certificates: []tls.Certificate{cert}}
 		l, err = tls.Listen(listenType, service, &config)
@@ -32,19 +33,14 @@ func serveTCP(port int, secure bool, handler requestHandler) {
 	} else {
 		l, err = net.Listen(listenType, service)
 	}
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	errors.CheckErr(err, "TCP listen failed")
 
 	defer l.Close()
 	log.Println("Listening on", service, "("+tlsFlag+")")
 
 	for {
 		conn, err := l.Accept()
-		if err != nil {
-			log.Fatal(err)
-		}
+		errors.CheckErr(err, "Accept connection failed")
 
 		log.Printf("Received message %s -> %s \n", conn.RemoteAddr(), conn.LocalAddr())
 
