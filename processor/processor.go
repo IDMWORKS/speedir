@@ -45,12 +45,12 @@ func parsePacket(conn net.Conn, packet *ber.Packet) {
 
 func handleBindRequest(messageID uint64, response *ber.Packet) {
 	version := response.Children[0].Value.(uint64)
-	name := response.Children[1].Value.(string)
+	username := response.Children[1].Value.(string)
 	auth := response.Children[2]
-	pass := auth.Data.String()
-	log.Println("ApplicationBindRequest:",
-		"messageID:", messageID,
-		"LDAP version:", version,
-		"username:", name,
-		"password:", pass)
+	password := auth.Data.String()
+	log.Println("\nApplicationBindRequest:",
+		"\n\tmessageID:", messageID,
+		"\n\tLDAP version:", version,
+		"\n\tusername:", username,
+		"\n\tpassword:", "********")
 }
