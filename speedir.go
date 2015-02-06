@@ -17,6 +17,8 @@ func main() {
 	defer dbmap.Db.Close()
 	datacontext.SeedDb(dbmap)
 
+	processor.DbMap = dbmap
+
 	//start first TCP server in a goroutine
 	go server.ServeTCP(listenTCPPort, false, processor.HandleRequest)
 

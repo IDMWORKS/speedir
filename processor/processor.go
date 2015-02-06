@@ -6,7 +6,14 @@ import (
 
 	"github.com/mmitton/asn1-ber"
 	"github.com/mmitton/ldap"
+	"github.com/nwoolls/speedir/datacontext"
+	"github.com/nwoolls/speedir/errors"
+	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/gorp.v1"
 )
+
+//DbMap provides access to the data layer
+var DbMap *gorp.DbMap
 
 //HandleRequest handles incoming LDAPv3 requests
 func HandleRequest(conn net.Conn) {
@@ -53,4 +60,19 @@ func handleBindRequest(messageID uint64, response *ber.Packet) {
 		"\n\tLDAP version:", version,
 		"\n\tusername:", username,
 		"\n\tpassword:", "********")
+
+	var users []datacontext.User
+	_, err := DbMap.Select(&users, "select * from users where username=$1", username)
+	errors.CheckErr(err, "Select failed")
+	if len(users) == 1 {
+		log.Println("User found:", username)
+		err = bcrypt.CompareHashAndPassword([]byte(users[0].PasswordHash), []byte(password))
+		if err == nil {
+			log.Println("Password for user valid:", username)
+		} else {
+			log.Println("Password for user invalid:", username)
+		}
+	} else {
+		log.Println("User not found:", username)
+	}
 }
