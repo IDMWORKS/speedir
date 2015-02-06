@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/nwoolls/speedir/datacontext"
 	"github.com/nwoolls/speedir/processor"
 	"github.com/nwoolls/speedir/server"
 )
@@ -11,6 +12,9 @@ const (
 )
 
 func main() {
+	//initialize DB schema
+	dbmap := datacontext.InitDb()
+	defer dbmap.Db.Close()
 	//start first TCP server in a goroutine
 	go server.ServeTCP(listenTCPPort, false, processor.HandleRequest)
 
