@@ -17,32 +17,44 @@ type requestHandler func(conn net.Conn)
 
 //ServeTCP starts a TCP server on port, optionally secure with a requestHandler
 func ServeTCP(port int, secure bool, handler requestHandler) {
-	service := "0.0.0.0:" + strconv.Itoa(port)
-	tlsFlag := "TCP"
+	listener := startListening(port, secure)
+	defer listener.Close()
+	handleConnections(listener, handler)
+}
+
+func startListening(port int, secure bool) net.Listener {
+	service, tlsFlag := "0.0.0.0:"+strconv.Itoa(port), "TCP"
 	var err error
-	var l net.Listener
+	var listener net.Listener
 
 	if secure {
-		//cert generation tool: http://golang.org/src/crypto/tls/generate_cert.go
-		cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
-		errors.CheckErr(err, "Load key pair failed")
-
-		config := tls.Config{Certificates: []tls.Certificate{cert}}
-		l, err = tls.Listen(listenType, service, &config)
+		listener, err = tls.Listen(listenType, service, createTLSConfig())
 		tlsFlag = "TLS"
 	} else {
-		l, err = net.Listen(listenType, service)
+		listener, err = net.Listen(listenType, service)
 	}
 	errors.CheckErr(err, "TCP listen failed")
 
-	defer l.Close()
 	log.Println("Listening on", service, "("+tlsFlag+")")
+	return listener
+}
 
+func createTLSConfig() *tls.Config {
+	//cert generation tool: http://golang.org/src/crypto/tls/generate_cert.go
+	cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
+	errors.CheckErr(err, "Load key pair failed")
+
+	return &tls.Config{Certificates: []tls.Certificate{cert}}
+}
+
+func handleConnections(listener net.Listener, handler requestHandler) {
 	for {
-		conn, err := l.Accept()
+		conn, err := listener.Accept()
 		errors.CheckErr(err, "Accept connection failed")
 
-		log.Printf("Received message %s -> %s \n", conn.RemoteAddr(), conn.LocalAddr())
+		log.Printf("Received message %s -> %s \n",
+			conn.RemoteAddr(),
+			conn.LocalAddr())
 
 		go handler(conn)
 	}
