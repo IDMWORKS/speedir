@@ -30,17 +30,19 @@ func HandleRequest(conn net.Conn) {
 
 func parsePacket(conn net.Conn, packet *ber.Packet) {
 	messageID := packet.Children[0].Value.(uint64)
-	response := packet.Children[1]
+	request := packet.Children[1]
 
-	if response.ClassType == ber.ClassApplication &&
-		response.TagType == ber.TypeConstructed {
-		switch response.Tag {
+	if request.ClassType == ber.ClassApplication &&
+		request.TagType == ber.TypeConstructed {
+
+		switch request.Tag {
 		case ldap.ApplicationBindRequest:
-			handleBindRequest(messageID, response)
+			handleBindRequest(messageID, request)
 		default:
-			log.Println("LDAPv3 app code not implemented:", response.Tag)
+			log.Println("LDAPv3 app code not implemented:", request.Tag)
 			ber.PrintPacket(packet)
 		}
+
 	}
 }
 
@@ -49,6 +51,7 @@ func handleBindRequest(messageID uint64, response *ber.Packet) {
 	username := response.Children[1].Value.(string)
 	auth := response.Children[2]
 	password := auth.Data.String()
+
 	log.Println("\nApplicationBindRequest:",
 		"\n\tmessageID:", messageID,
 		"\n\tLDAP version:", version,
@@ -58,6 +61,7 @@ func handleBindRequest(messageID uint64, response *ber.Packet) {
 	var users []models.User
 	_, err := DbMap.Select(&users, "select * from users where username=$1", username)
 	errors.CheckErr(err, "Select failed")
+
 	if len(users) == 1 {
 		log.Println("User found:", username)
 
@@ -66,6 +70,7 @@ func handleBindRequest(messageID uint64, response *ber.Packet) {
 		} else {
 			log.Println("Password for user invalid:", username)
 		}
+
 	} else {
 		log.Println("User not found:", username)
 	}
