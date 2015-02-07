@@ -2,11 +2,10 @@ package datacontext
 
 import (
 	"database/sql"
-	"time"
 
-	_ "github.com/lib/pq" //_ = imported for side effects
 	"github.com/idmworks/speedir/errors"
 	"github.com/idmworks/speedir/models"
+	_ "github.com/lib/pq" //_ = imported for side effects
 	"gopkg.in/gorp.v1"
 )
 
@@ -36,16 +35,15 @@ func InitDb() *gorp.DbMap {
 
 //SeedDb seeds the DB with data necessary for the app to run
 func SeedDb(dbmap *gorp.DbMap) {
+	createAdminIfNotExists(dbmap)
+}
+
+func createAdminIfNotExists(dbmap *gorp.DbMap) {
 	count, err := dbmap.SelectInt("select count(id) from users where username=$1", adminUsername)
 	errors.CheckErr(err, "SelectInt failed")
 
 	if count == 0 {
-		admin := models.User{
-			Created:  time.Now().UnixNano(),
-			Username: adminUsername,
-		}
-		admin.SetPassword(adminPassword)
-
+		admin := models.CreateUser(adminUsername, adminPassword)
 		err = dbmap.Insert(&admin)
 		errors.CheckErr(err, "Insert failed")
 	}

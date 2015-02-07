@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"io"
+	"time"
 
 	"github.com/idmworks/speedir/errors"
 	"golang.org/x/crypto/pbkdf2"
@@ -25,6 +26,16 @@ type User struct {
 	Username     string
 	PasswordHash string
 	PasswordSalt string
+}
+
+//CreateUser creates a User with the specified username and password
+func CreateUser(username string, password string) User {
+	user := User{
+		Created:  time.Now().UnixNano(),
+		Username: username,
+	}
+	user.SetPassword(password)
+	return user
 }
 
 //ComparePassword compares the password with the user's hash and salt
