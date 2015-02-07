@@ -29,3 +29,6 @@ _testmain.go
 # Artifacts
 speedir
 
+.idea
+*.iml
+.DS_Store
