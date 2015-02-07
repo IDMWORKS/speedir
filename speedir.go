@@ -14,14 +14,16 @@ const (
 func main() {
 	//initialize DB schema
 	dbmap := datacontext.InitDb()
+	//close DB when app exits
 	defer dbmap.Db.Close()
+	//seed DB data
 	datacontext.SeedDb(dbmap)
 
+	//give processor access to data
 	processor.DbMap = dbmap
 
 	//start first TCP server in a goroutine
 	go server.ServeTCP(listenTCPPort, false, processor.HandleRequest)
-
 	//start second TCP (TLS) server in the main thread
 	server.ServeTCP(listenTLSPort, true, processor.HandleRequest)
 }
