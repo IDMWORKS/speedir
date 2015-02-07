@@ -1,13 +1,14 @@
 package processor
 
 import (
+	"bufio"
 	"log"
 	"net"
 
-	"github.com/mmitton/asn1-ber"
-	"github.com/mmitton/ldap"
 	"github.com/idmworks/speedir/errors"
 	"github.com/idmworks/speedir/models"
+	"github.com/mmitton/asn1-ber"
+	"github.com/mmitton/ldap"
 	"gopkg.in/gorp.v1"
 )
 
@@ -18,16 +19,9 @@ var DbMap *gorp.DbMap
 func HandleRequest(conn net.Conn) {
 	defer conn.Close()
 
-	buf := make([]byte, 1024)
-	_, err := conn.Read(buf)
+	packet, err := ber.ReadPacket(bufio.NewReader(conn))
 	if err != nil {
 		log.Println("Error reading:", err.Error())
-	}
-
-	packet := ber.DecodePacket(buf)
-
-	if len(packet.Children) == 0 {
-		log.Println("Error decoding asn1-ber packet: wrong port?")
 		return
 	}
 
