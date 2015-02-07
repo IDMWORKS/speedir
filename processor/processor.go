@@ -23,6 +23,13 @@ func HandleRequest(conn net.Conn) {
 		return
 	}
 
+	//required to catch issues like TLS/TCP port mis-matches
+	if len(packet.Children) == 0 {
+		defer conn.Close()
+		log.Println("Error decoding asn1-ber packet: wrong port?")
+		return
+	}
+
 	parsePacket(conn, packet)
 }
 
