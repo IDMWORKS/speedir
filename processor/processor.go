@@ -39,6 +39,7 @@ func parsePacket(conn net.Conn, packet *ber.Packet) {
 			handleBindRequest(messageID, response)
 		default:
 			log.Println("LDAPv3 app code not implemented:", response.Tag)
+			ber.PrintPacket(packet)
 		}
 	}
 }
