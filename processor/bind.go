@@ -21,16 +21,9 @@ func handleBindRequest(conn net.Conn, messageID uint64, request *ber.Packet) {
 }
 
 func getBindResponse(messageID uint64, request *ber.Packet) (response *ber.Packet, result int) {
-	version := request.Children[0].Value.(uint64)
 	username := request.Children[1].Value.(string)
 	auth := request.Children[2]
 	password := auth.Data.String()
-
-	log.Println("\nBindRequest:",
-		"\n\tmessageID:", messageID,
-		"\n\tLDAP version:", version,
-		"\n\tusername:", username,
-		"\n\tpassword:", "********")
 
 	var users []models.User
 	_, err := DbMap.Select(&users, "select * from users where username=$1", username)

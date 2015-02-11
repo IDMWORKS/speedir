@@ -13,11 +13,19 @@ import (
 // DbMap provides access to the data layer
 var DbMap *gorp.DbMap
 
+// Verbose controls the verbosity of logging
+var Verbose = false
+
 // HandleRequest handles incoming LDAPv3 requests
 func HandleRequest(conn net.Conn) {
 	// continuously read from the connection
 	for {
 		packet, err := ber.ReadPacket(bufio.NewReader(conn))
+
+		if Verbose {
+			ber.PrintPacket(packet)
+		}
+
 		if err != nil {
 			defer conn.Close()
 			log.Println("Error reading:", err.Error())
@@ -47,7 +55,6 @@ func parsePacket(conn net.Conn, packet *ber.Packet) {
 			handleBindRequest(conn, messageID, request)
 		default:
 			log.Println("LDAPv3 app code not implemented:", request.Tag)
-			ber.PrintPacket(packet)
 		}
 
 	}
@@ -56,7 +63,9 @@ func parsePacket(conn net.Conn, packet *ber.Packet) {
 func sendLdapResponse(conn net.Conn, packet *ber.Packet) {
 	buf := packet.Bytes()
 
-	ber.PrintPacket(packet)
+	if Verbose {
+		ber.PrintPacket(packet)
+	}
 
 	for len(buf) > 0 {
 		n, err := conn.Write(buf)
