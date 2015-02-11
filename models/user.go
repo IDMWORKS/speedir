@@ -12,14 +12,14 @@ import (
 )
 
 const (
-	//HashIterations is the number of iterations (used by PBKDF2)
+	// HashIterations is the number of iterations (used by PBKDF2)
 	hashIterations = 4096
-	//HashKeyLength is the desired derived key length (used by PBKDF2)
+	// HashKeyLength is the desired derived key length (used by PBKDF2)
 	hashKeyLength = 32
 	saltSize      = 16
 )
 
-//User model in the DB
+// User model in the DB
 type User struct {
 	Id           int64
 	Created      int64
@@ -28,7 +28,7 @@ type User struct {
 	PasswordSalt string
 }
 
-//CreateUser creates a User with the specified username and password
+// CreateUser creates a User with the specified username and password
 func CreateUser(username string, password string) User {
 	user := User{
 		Created:  time.Now().UnixNano(),
@@ -38,7 +38,7 @@ func CreateUser(username string, password string) User {
 	return user
 }
 
-//ComparePassword compares the password with the user's hash and salt
+// ComparePassword compares the password with the user's hash and salt
 func (user *User) ComparePassword(password string) bool {
 	salt, err := base64.StdEncoding.DecodeString(user.PasswordSalt)
 	errors.CheckErr(err, "DecodeString failed")
@@ -50,7 +50,7 @@ func (user *User) ComparePassword(password string) bool {
 	return expecting == actual
 }
 
-//SetPassword sets the password hash and salt on a user
+// SetPassword sets the password hash and salt on a user
 func (user *User) SetPassword(password string) {
 	salt := generateSalt()
 	passwordHash := pbkdf2.Key([]byte(password), salt, hashIterations, hashKeyLength, sha1.New)
