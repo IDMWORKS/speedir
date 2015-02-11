@@ -2,6 +2,7 @@ package datacontext
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/idmworks/speedir/errors"
 	"github.com/idmworks/speedir/models"
@@ -15,9 +16,9 @@ const (
 )
 
 // InitDb creates / updates the DB schema as needed
-func InitDb() *gorp.DbMap {
+func InitDb(dbname string, dbuser string) *gorp.DbMap {
 	// open DB connection
-	db, err := sql.Open("postgres", "user=speedir dbname=speedir sslmode=disable")
+	db, err := sql.Open("postgres", fmt.Sprintf("user=%s dbname=%s sslmode=disable", dbuser, dbname))
 	errors.CheckErr(err, "sql.Open failed")
 
 	// initialize gorp DB map

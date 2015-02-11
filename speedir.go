@@ -13,7 +13,7 @@ const (
 
 func main() {
 	//initialize DB schema
-	dbmap := datacontext.InitDb()
+	dbmap := datacontext.InitDb("speedir", "speedir")
 	//close DB when app exits
 	defer dbmap.Db.Close()
 	//seed DB data
