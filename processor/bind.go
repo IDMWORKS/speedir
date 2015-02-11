@@ -52,30 +52,20 @@ func handleBindRequest(conn net.Conn, messageID uint64, request *ber.Packet) {
 }
 
 func sendBindResponse(conn net.Conn, messageID uint64, ldapResult int) {
-	packet := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
-	packet.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagInteger, messageID, "MessageID"))
+	packet := getBindResponse(messageID, ldapResult)
+	log.Println("Sending BindResponse:")
+	sendLdapResponse(conn, packet)
+}
+
+func getBindResponse(messageID uint64, ldapResult int) *ber.Packet {
+	ldapResponse := getLdapResponse(messageID, ldapResult)
 	bindResponse := ber.Encode(ber.ClassApplication, ber.TypeConstructed, ldap.ApplicationBindResponse, nil, "Bind Response")
 	bindResponse.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagEnumerated, uint64(ldapResult), "LDAP Result"))
 
 	bindResponse.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimative, ber.TagOctetString, "", "Matched DN"))
 	bindResponse.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimative, ber.TagOctetString, "", "Error Message"))
 
-	packet.AppendChild(bindResponse)
+	ldapResponse.AppendChild(bindResponse)
 
-	buf := packet.Bytes()
-
-	log.Println("Sending BindResponse:")
-	ber.PrintPacket(packet)
-
-	for len(buf) > 0 {
-		n, err := conn.Write(buf)
-		if err != nil {
-			log.Printf("Error Sending Message: %s\n", err)
-			return
-		}
-		if n == len(buf) {
-			break
-		}
-		buf = buf[n:]
-	}
+	return ldapResponse
 }

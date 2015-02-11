@@ -52,3 +52,27 @@ func parsePacket(conn net.Conn, packet *ber.Packet) {
 
 	}
 }
+
+func sendLdapResponse(conn net.Conn, packet *ber.Packet) {
+	buf := packet.Bytes()
+
+	ber.PrintPacket(packet)
+
+	for len(buf) > 0 {
+		n, err := conn.Write(buf)
+		if err != nil {
+			log.Printf("Error Sending Message: %s\n", err)
+			return
+		}
+		if n == len(buf) {
+			break
+		}
+		buf = buf[n:]
+	}
+}
+
+func getLdapResponse(messageID uint64, ldapResult int) *ber.Packet {
+	packet := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
+	packet.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagInteger, messageID, "MessageID"))
+	return packet
+}
