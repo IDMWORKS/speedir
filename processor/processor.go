@@ -44,7 +44,7 @@ func parsePacket(conn net.Conn, packet *ber.Packet) {
 
 		switch request.Tag {
 		case ldap.ApplicationBindRequest:
-			handleBindRequest(messageID, request)
+			handleBindRequest(conn, messageID, request)
 		default:
 			log.Println("LDAPv3 app code not implemented:", request.Tag)
 			ber.PrintPacket(packet)
