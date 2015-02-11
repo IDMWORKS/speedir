@@ -14,26 +14,26 @@ const (
 	adminPassword = "admin"
 )
 
-//InitDb creates / updates the DB schema as needed
+// InitDb creates / updates the DB schema as needed
 func InitDb() *gorp.DbMap {
-	//open DB connection
+	// open DB connection
 	db, err := sql.Open("postgres", "user=speedir dbname=speedir sslmode=disable")
 	errors.CheckErr(err, "sql.Open failed")
 
-	//initialize gorp DB map
+	// initialize gorp DB map
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
 
-	//map models to tables
+	// map models to tables
 	dbmap.AddTableWithName(models.User{}, "users").SetKeys(true, "Id")
 
-	//create missing tables
+	// create missing tables
 	err = dbmap.CreateTablesIfNotExists()
 	errors.CheckErr(err, "Create tables failed")
 
 	return dbmap
 }
 
-//SeedDb seeds the DB with data necessary for the app to run
+// SeedDb seeds the DB with data necessary for the app to run
 func SeedDb(dbmap *gorp.DbMap) {
 	createAdminIfNotExists(dbmap)
 }

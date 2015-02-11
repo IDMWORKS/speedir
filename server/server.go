@@ -15,7 +15,7 @@ const (
 
 type requestHandler func(conn net.Conn)
 
-//ServeTCP starts a TCP server on port, optionally secure with a requestHandler
+// ServeTCP starts a TCP server on port, optionally secure with a requestHandler
 func ServeTCP(port int, secure bool, handler requestHandler) {
 	listener := startListening(port, secure)
 	defer listener.Close()
@@ -40,7 +40,7 @@ func startListening(port int, secure bool) net.Listener {
 }
 
 func createTLSConfig() *tls.Config {
-	//cert generation tool: http://golang.org/src/crypto/tls/generate_cert.go
+	// cert generation tool: http://golang.org/src/crypto/tls/generate_cert.go
 	cert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
 	errors.CheckErr(err, "Load key pair failed")
 
@@ -48,6 +48,7 @@ func createTLSConfig() *tls.Config {
 }
 
 func handleConnections(listener net.Listener, handler requestHandler) {
+	// continuously accept connections
 	for {
 		conn, err := listener.Accept()
 		errors.CheckErr(err, "Accept connection failed")

@@ -10,10 +10,10 @@ import (
 	"gopkg.in/gorp.v1"
 )
 
-//DbMap provides access to the data layer
+// DbMap provides access to the data layer
 var DbMap *gorp.DbMap
 
-//HandleRequest handles incoming LDAPv3 requests
+// HandleRequest handles incoming LDAPv3 requests
 func HandleRequest(conn net.Conn) {
 	defer conn.Close()
 
