@@ -11,6 +11,16 @@ import (
 )
 
 func handleBindRequest(conn net.Conn, messageID uint64, request *ber.Packet) {
+	response, result := getBindResponse(messageID, request)
+
+	if result != ldap.LDAPResultSuccess {
+		defer conn.Close()
+	}
+
+	sendLdapResponse(conn, response)
+}
+
+func getBindResponse(messageID uint64, request *ber.Packet) (response *ber.Packet, result int) {
 	version := request.Children[0].Value.(uint64)
 	username := request.Children[1].Value.(string)
 	auth := request.Children[2]
@@ -26,38 +36,30 @@ func handleBindRequest(conn net.Conn, messageID uint64, request *ber.Packet) {
 	_, err := DbMap.Select(&users, "select * from users where username=$1", username)
 	errors.CheckErr(err, "Select failed")
 
-	bindResult := ldap.LDAPResultProtocolError
+	result = ldap.LDAPResultProtocolError
 
 	if len(users) == 1 {
 		log.Println("User found:", username)
 
 		if users[0].ComparePassword(password) {
 			log.Println("Password for user valid:", username)
-			bindResult = ldap.LDAPResultSuccess
+			result = ldap.LDAPResultSuccess
 		} else {
 			log.Println("Password for user invalid:", username)
-			bindResult = ldap.LDAPResultInvalidCredentials
+			result = ldap.LDAPResultInvalidCredentials
 		}
 
 	} else {
 		log.Println("User not found:", username)
-		bindResult = ldap.LDAPResultInvalidCredentials
+		result = ldap.LDAPResultInvalidCredentials
 	}
 
-	if bindResult != ldap.LDAPResultSuccess {
-		defer conn.Close()
-	}
+	response = buildBindResponse(messageID, result)
 
-	sendBindResponse(conn, messageID, bindResult)
+	return
 }
 
-func sendBindResponse(conn net.Conn, messageID uint64, ldapResult int) {
-	packet := getBindResponse(messageID, ldapResult)
-	log.Println("Sending BindResponse:")
-	sendLdapResponse(conn, packet)
-}
-
-func getBindResponse(messageID uint64, ldapResult int) *ber.Packet {
+func buildBindResponse(messageID uint64, ldapResult int) *ber.Packet {
 	ldapResponse := getLdapResponse(messageID, ldapResult)
 	bindResponse := ber.Encode(ber.ClassApplication, ber.TypeConstructed, ldap.ApplicationBindResponse, nil, "Bind Response")
 	bindResponse.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagEnumerated, uint64(ldapResult), "LDAP Result"))
