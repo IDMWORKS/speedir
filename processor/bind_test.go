@@ -45,15 +45,26 @@ func TestBuildBindResponse(t *testing.T) {
 
 func TestGetBindResponse(t *testing.T) {
 	for i, creds := range testCredentials {
-		request := buildBindRequest(creds.username, creds.password)
-		response, _ := getBindResponse(uint64(i), request)
-		actual, found := parseLDAPResult(response)
-		if !found {
-			t.Error("BindResponse malformed for", creds)
-		}
-		if actual != creds.result {
-			t.Error("BindResponse result mismatch for", creds)
-		}
+		testGetBindResponse(t, uint64(i), creds)
+	}
+}
+
+func BenchmarkGetBindResponse(b *testing.B) {
+	creds := testCredentials[0]
+	for i := 0; i < b.N; i++ {
+		testGetBindResponse(b, uint64(i), creds)
+	}
+}
+
+func testGetBindResponse(tb testing.TB, messageID uint64, creds credentials) {
+	request := buildBindRequest(creds.username, creds.password)
+	response, _ := getBindResponse(messageID, request)
+	actual, found := parseLDAPResult(response)
+	if !found {
+		tb.Error("BindResponse malformed for", creds)
+	}
+	if actual != creds.result {
+		tb.Error("BindResponse result mismatch for", creds)
 	}
 }
 
