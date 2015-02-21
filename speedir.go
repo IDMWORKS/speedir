@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 
 	"github.com/idmworks/speedir/datacontext"
@@ -22,9 +21,10 @@ var (
 
 func main() {
 	parseFlags()
-	db := setupDb()
-	defer closeDb(db)
-	setupProcessor(db)
+	dc := &datacontext.DataContext{DBName: dbname, DBUser: dbuser}
+	setupDb(dc)
+	defer dc.CloseDb()
+	setupProcessor(dc)
 	startServers()
 }
 
@@ -37,18 +37,13 @@ func parseFlags() {
 	verbose = *verbosePtr
 }
 
-func setupDb() *sql.DB {
-	db := datacontext.InitDb(dbname, dbuser)
-	datacontext.SeedDb(db)
-	return db
+func setupDb(dc *datacontext.DataContext) {
+	dc.InitDb()
+	dc.SeedDb()
 }
 
-func closeDb(db *sql.DB) {
-	db.Close()
-}
-
-func setupProcessor(db *sql.DB) {
-	processor.Db = db
+func setupProcessor(dc *datacontext.DataContext) {
+	processor.DC = dc
 	processor.Verbose = verbose
 }
 

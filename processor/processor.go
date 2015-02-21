@@ -2,16 +2,16 @@ package processor
 
 import (
 	"bufio"
-	"database/sql"
 	"log"
 	"net"
 
+	"github.com/idmworks/speedir/datacontext"
 	"github.com/mmitton/asn1-ber"
 	"github.com/mmitton/ldap"
 )
 
-// DbMap provides access to the data layer
-var Db *sql.DB
+// DC provides access to the data layer
+var DC *datacontext.DataContext
 
 // Verbose controls the verbosity of logging
 var Verbose = false

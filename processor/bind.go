@@ -27,8 +27,9 @@ func getBindResponse(messageID uint64, request *ber.Packet) (response *ber.Packe
 	password := auth.Data.String()
 
 	users := make(models.Users, 0)
+
 	// need to patch the leaky abstraction of SQL here
-	rows, err := Db.Query(datacontext.SqlSelectUserByUsername, username)
+	rows, err := DC.DB.Query(datacontext.SqlSelectUserByUsername, username)
 	errors.CheckErr(err, "Select failed")
 	users.Scan(rows)
 

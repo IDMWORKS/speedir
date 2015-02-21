@@ -25,10 +25,11 @@ var allTables = []string{
 }
 
 func TestMain(t *testing.T) {
-	db := OpenDb(dbname, dbuser)
-	defer db.Close()
+	dc := &DataContext{DBName: dbname, DBUser: dbuser}
+	dc.OpenDb()
+	defer dc.CloseDb()
 
-	dropTablesIfExists(t, db)
+	dropTablesIfExists(t, dc.DB)
 }
 
 func dropTablesIfExists(t *testing.T, db *sql.DB) {
@@ -41,11 +42,12 @@ func dropTablesIfExists(t *testing.T, db *sql.DB) {
 }
 
 func TestInitDb(t *testing.T) {
-	db := InitDb(dbname, dbuser)
-	defer db.Close()
+	dc := &DataContext{DBName: dbname, DBUser: dbuser}
+	dc.InitDb()
+	defer dc.CloseDb()
 
 	for _, table := range allTables {
-		_, err := db.Exec(fmt.Sprintf(`SELECT * FROM %s LIMIT 1`, table))
+		_, err := dc.DB.Exec(fmt.Sprintf(`SELECT * FROM %s LIMIT 1`, table))
 		if err != nil {
 			t.Error("Error querying table:", err)
 		}
@@ -53,33 +55,34 @@ func TestInitDb(t *testing.T) {
 }
 
 func TestSeedDb(t *testing.T) {
-	db := InitDb(dbname, dbuser)
-	defer db.Close()
+	dc := &DataContext{DBName: dbname, DBUser: dbuser}
+	dc.InitDb()
+	defer dc.CloseDb()
 
-	SeedDb(db)
+	dc.SeedDb()
 
 	var count int
-	db.QueryRow(`SELECT COUNT(*) FROM users WHERE username = $1`, adminUsername).Scan(&count)
+	dc.DB.QueryRow(`SELECT COUNT(*) FROM users WHERE username = $1`, adminUsername).Scan(&count)
 	if count == 0 {
 		t.Error("No admin user seeded")
 	}
 
-	db.QueryRow(`SELECT COUNT(*) FROM syntaxes`).Scan(&count)
+	dc.DB.QueryRow(`SELECT COUNT(*) FROM syntaxes`).Scan(&count)
 	if count != len(models.LDAPv3Syntaxes) {
 		t.Error("Wrong number of rows seeded")
 	}
 
-	db.QueryRow(`SELECT COUNT(*) FROM matching_rules`).Scan(&count)
+	dc.DB.QueryRow(`SELECT COUNT(*) FROM matching_rules`).Scan(&count)
 	if count != len(models.LDAPv3MatchingRules) {
 		t.Error("Wrong number of rows seeded")
 	}
 
-	db.QueryRow(`SELECT COUNT(*) FROM attribute_types`).Scan(&count)
+	dc.DB.QueryRow(`SELECT COUNT(*) FROM attribute_types`).Scan(&count)
 	if count != len(models.LDAPv3AttributeTypes) {
 		t.Error("Wrong number of rows seeded")
 	}
 
-	db.QueryRow(`SELECT COUNT(*) FROM object_classes`).Scan(&count)
+	dc.DB.QueryRow(`SELECT COUNT(*) FROM object_classes`).Scan(&count)
 	if count != len(models.LDAPv3ObjectClasses) {
 		t.Error("Wrong number of rows seeded")
 	}

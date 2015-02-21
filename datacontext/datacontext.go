@@ -15,21 +15,39 @@ const (
 	adminPassword = "admin"
 )
 
+type DataContext struct {
+	DBName string
+	DBUser string
+	DB     *sql.DB
+}
+
 // InitDb opens the DB & updates the schema as needed
-func InitDb(dbname string, dbuser string) *sql.DB {
-	db := OpenDb(dbname, dbuser)
+func (dc *DataContext) InitDb() {
+	dc.OpenDb()
 
-	createTablesIfNotExists(db)
-
-	return db
+	createTablesIfNotExists(dc.DB)
 }
 
 // OpenDb opens the database
-func OpenDb(dbname string, dbuser string) *sql.DB {
-	db, err := sql.Open("postgres", "user="+dbuser+" dbname="+dbname+" sslmode=disable")
+func (dc *DataContext) OpenDb() {
+	db, err := sql.Open("postgres", "user="+dc.DBUser+" dbname="+dc.DBName+" sslmode=disable")
 	errors.CheckErr(err, "sql.Open failed")
+	dc.DB = db
+}
 
-	return db
+// OpenDb opens the database
+func (dc *DataContext) CloseDb() {
+	dc.DB.Close()
+	dc.DB = nil
+}
+
+// SeedDb seeds the DB with data necessary for the app to run
+func (dc *DataContext) SeedDb() {
+	createAdminIfNotExists(dc.DB)
+	createSyntaxesIfNotExists(dc.DB)
+	createMatchingRulesIfNotExists(dc.DB)
+	createAttributeTypesIfNotExists(dc.DB)
+	createObjectClassesIfNotExists(dc.DB)
 }
 
 func createTablesIfNotExists(db *sql.DB) {
@@ -44,15 +62,6 @@ func createTablesIfNotExists(db *sql.DB) {
 		_, err := db.Exec(statement)
 		errors.CheckErr(err, "db.Exec failed")
 	}
-}
-
-// SeedDb seeds the DB with data necessary for the app to run
-func SeedDb(db *sql.DB) {
-	createAdminIfNotExists(db)
-	createSyntaxesIfNotExists(db)
-	createMatchingRulesIfNotExists(db)
-	createAttributeTypesIfNotExists(db)
-	createObjectClassesIfNotExists(db)
 }
 
 func createAdminIfNotExists(db *sql.DB) {
