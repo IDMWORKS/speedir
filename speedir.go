@@ -24,8 +24,8 @@ func main() {
 	dc := &datacontext.DataContext{DBName: dbname, DBUser: dbuser}
 	setupDb(dc)
 	defer dc.CloseDb()
-	setupProcessor(dc)
-	startServers()
+	proc := setupProcessor(dc)
+	startServers(proc)
 }
 
 func parseFlags() {
@@ -42,14 +42,14 @@ func setupDb(dc *datacontext.DataContext) {
 	dc.SeedDb()
 }
 
-func setupProcessor(dc *datacontext.DataContext) {
-	processor.DC = dc
-	processor.Verbose = verbose
+func setupProcessor(dc *datacontext.DataContext) *processor.Processor {
+	proc := &processor.Processor{DC: dc, Verbose: verbose}
+	return proc
 }
 
-func startServers() {
+func startServers(proc *processor.Processor) {
 	// start first TCP server in a goroutine
-	go server.ServeTCP(listenTCPPort, false, processor.HandleRequest)
+	go server.ServeTCP(listenTCPPort, false, proc.HandleRequest)
 	// start second TCP (TLS) server in the main thread
-	server.ServeTCP(listenTLSPort, true, processor.HandleRequest)
+	server.ServeTCP(listenTLSPort, true, proc.HandleRequest)
 }

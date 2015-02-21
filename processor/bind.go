@@ -7,21 +7,22 @@ import (
 	"github.com/idmworks/speedir/datacontext"
 	"github.com/idmworks/speedir/errors"
 	"github.com/idmworks/speedir/models"
+
 	"github.com/mmitton/asn1-ber"
 	"github.com/mmitton/ldap"
 )
 
-func handleBindRequest(conn net.Conn, messageID uint64, request *ber.Packet) {
-	response, result := getBindResponse(messageID, request)
+func (proc *Processor) handleBindRequest(conn net.Conn, messageID uint64, request *ber.Packet) {
+	response, result := proc.getBindResponse(messageID, request)
 
 	if result != ldap.LDAPResultSuccess {
 		defer conn.Close()
 	}
 
-	sendLdapResponse(conn, response)
+	proc.sendLdapResponse(conn, response)
 }
 
-func getBindResponse(messageID uint64, request *ber.Packet) (response *ber.Packet, result int) {
+func (proc *Processor) getBindResponse(messageID uint64, request *ber.Packet) (response *ber.Packet, result int) {
 	username := request.Children[1].Value.(string)
 	auth := request.Children[2]
 	password := auth.Data.String()
@@ -29,7 +30,7 @@ func getBindResponse(messageID uint64, request *ber.Packet) (response *ber.Packe
 	users := make(models.Users, 0)
 
 	// need to patch the leaky abstraction of SQL here
-	rows, err := DC.DB.Query(datacontext.SqlSelectUserByUsername, username)
+	rows, err := proc.DC.DB.Query(datacontext.SqlSelectUserByUsername, username)
 	errors.CheckErr(err, "Select failed")
 	users.Scan(rows)
 
@@ -51,13 +52,13 @@ func getBindResponse(messageID uint64, request *ber.Packet) (response *ber.Packe
 		result = ldap.LDAPResultInvalidCredentials
 	}
 
-	response = buildBindResponse(messageID, result)
+	response = proc.buildBindResponse(messageID, result)
 
 	return
 }
 
-func buildBindResponse(messageID uint64, ldapResult int) *ber.Packet {
-	ldapResponse := getLdapResponse(messageID, ldapResult)
+func (proc *Processor) buildBindResponse(messageID uint64, ldapResult int) *ber.Packet {
+	ldapResponse := proc.getLdapResponse(messageID, ldapResult)
 	bindResponse := ber.Encode(ber.ClassApplication, ber.TypeConstructed, ldap.ApplicationBindResponse, nil, "Bind Response")
 	bindResponse.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagEnumerated, uint64(ldapResult), "LDAP Result"))
 

@@ -10,19 +10,20 @@ import (
 	"github.com/mmitton/ldap"
 )
 
-// DC provides access to the data layer
-var DC *datacontext.DataContext
-
-// Verbose controls the verbosity of logging
-var Verbose = false
+type Processor struct {
+	// DC provides access to the data layer
+	DC *datacontext.DataContext
+	// Verbose controls the verbosity of logging
+	Verbose bool
+}
 
 // HandleRequest handles incoming LDAPv3 requests
-func HandleRequest(conn net.Conn) {
+func (proc *Processor) HandleRequest(conn net.Conn) {
 	// continuously read from the connection
 	for {
 		packet, err := ber.ReadPacket(bufio.NewReader(conn))
 
-		if Verbose {
+		if proc.Verbose {
 			ber.PrintPacket(packet)
 		}
 
@@ -39,11 +40,11 @@ func HandleRequest(conn net.Conn) {
 			return
 		}
 
-		parsePacket(conn, packet)
+		proc.parsePacket(conn, packet)
 	}
 }
 
-func parsePacket(conn net.Conn, packet *ber.Packet) {
+func (proc *Processor) parsePacket(conn net.Conn, packet *ber.Packet) {
 	messageID := packet.Children[0].Value.(uint64)
 	request := packet.Children[1]
 
@@ -52,7 +53,7 @@ func parsePacket(conn net.Conn, packet *ber.Packet) {
 
 		switch request.Tag {
 		case ldap.ApplicationBindRequest:
-			handleBindRequest(conn, messageID, request)
+			proc.handleBindRequest(conn, messageID, request)
 		default:
 			log.Println("LDAPv3 app code not implemented:", request.Tag)
 		}
@@ -60,10 +61,10 @@ func parsePacket(conn net.Conn, packet *ber.Packet) {
 	}
 }
 
-func sendLdapResponse(conn net.Conn, packet *ber.Packet) {
+func (proc *Processor) sendLdapResponse(conn net.Conn, packet *ber.Packet) {
 	buf := packet.Bytes()
 
-	if Verbose {
+	if proc.Verbose {
 		ber.PrintPacket(packet)
 	}
 
@@ -80,7 +81,7 @@ func sendLdapResponse(conn net.Conn, packet *ber.Packet) {
 	}
 }
 
-func getLdapResponse(messageID uint64, ldapResult int) *ber.Packet {
+func (proc *Processor) getLdapResponse(messageID uint64, ldapResult int) *ber.Packet {
 	packet := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
 	packet.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagInteger, messageID, "MessageID"))
 	return packet

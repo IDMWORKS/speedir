@@ -25,17 +25,19 @@ var testCredentials = []credentials{
 	{"admin2", "admin", ldap.LDAPResultInvalidCredentials},
 }
 
+var dc = &datacontext.DataContext{DBName: dbname, DBUser: dbuser}
+var proc = &Processor{DC: dc}
+
 func TestMain(t *testing.T) {
-	DC = &datacontext.DataContext{DBName: dbname, DBUser: dbuser}
-	DC.InitDb()
-	defer DC.CloseDb()
-	DC.SeedDb()
+	dc.InitDb()
+	defer dc.CloseDb()
+	dc.SeedDb()
 }
 
 func TestBuildBindResponse(t *testing.T) {
 	messageID := 1
 	expected := ldap.LDAPResultProtocolError
-	packet := buildBindResponse(uint64(messageID), expected)
+	packet := proc.buildBindResponse(uint64(messageID), expected)
 	actual, found := parseLDAPResult(packet)
 	if !found {
 		t.Error("BindResponse malformed")
@@ -46,9 +48,8 @@ func TestBuildBindResponse(t *testing.T) {
 }
 
 func TestGetBindResponse(t *testing.T) {
-	DC = &datacontext.DataContext{DBName: dbname, DBUser: dbuser}
-	DC.OpenDb()
-	defer DC.CloseDb()
+	dc.OpenDb()
+	defer dc.CloseDb()
 
 	for i, creds := range testCredentials {
 		testGetBindResponse(t, uint64(i), creds)
@@ -56,9 +57,8 @@ func TestGetBindResponse(t *testing.T) {
 }
 
 func BenchmarkGetBindResponse(b *testing.B) {
-	DC = &datacontext.DataContext{DBName: dbname, DBUser: dbuser}
-	DC.OpenDb()
-	defer DC.CloseDb()
+	dc.OpenDb()
+	defer dc.CloseDb()
 
 	creds := testCredentials[0]
 	for i := 0; i < b.N; i++ {
@@ -68,7 +68,7 @@ func BenchmarkGetBindResponse(b *testing.B) {
 
 func testGetBindResponse(tb testing.TB, messageID uint64, creds credentials) {
 	request := buildBindRequest(creds.username, creds.password)
-	response, _ := getBindResponse(messageID, request)
+	response, _ := proc.getBindResponse(messageID, request)
 	actual, found := parseLDAPResult(response)
 	if !found {
 		tb.Error("BindResponse malformed for", creds)
