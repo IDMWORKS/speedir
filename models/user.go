@@ -3,6 +3,7 @@ package models
 import (
 	"crypto/rand"
 	"crypto/sha1"
+	"database/sql"
 	"encoding/base64"
 	"io"
 	"time"
@@ -26,6 +27,29 @@ type User struct {
 	Username     string
 	PasswordHash string
 	PasswordSalt string
+}
+
+type Users []*User
+
+func (users *Users) Scan(rows *sql.Rows) {
+	for rows.Next() {
+
+		user := &User{}
+		user.Scan(rows)
+		*users = append(*users, user)
+
+	}
+	errors.CheckErr(rows.Err(), "rows.Next failed")
+}
+
+func (user *User) Scan(rows *sql.Rows) {
+	err := rows.Scan(
+		&user.Id,
+		&user.Created,
+		&user.Username,
+		&user.PasswordHash,
+		&user.PasswordSalt)
+	errors.CheckErr(err, "rows.Scan failed")
 }
 
 // CreateUser creates a User with the specified username and password

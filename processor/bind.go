@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/idmworks/speedir/datacontext"
 	"github.com/idmworks/speedir/errors"
 	"github.com/idmworks/speedir/models"
 	"github.com/mmitton/asn1-ber"
@@ -25,9 +26,11 @@ func getBindResponse(messageID uint64, request *ber.Packet) (response *ber.Packe
 	auth := request.Children[2]
 	password := auth.Data.String()
 
-	var users []models.User
-	_, err := DbMap.Select(&users, "select * from users where username=$1", username)
+	users := make(models.Users, 0)
+	// need to patch the leaky abstraction of SQL here
+	rows, err := Db.Query(datacontext.SqlSelectUserByUsername, username)
 	errors.CheckErr(err, "Select failed")
+	users.Scan(rows)
 
 	result = ldap.LDAPResultProtocolError
 

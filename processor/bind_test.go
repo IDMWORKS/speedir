@@ -26,8 +26,10 @@ var testCredentials = []credentials{
 }
 
 func TestMain(t *testing.T) {
-	DbMap = datacontext.InitDb(dbname, dbuser)
-	datacontext.SeedDb(DbMap)
+	db := datacontext.InitDb(dbname, dbuser)
+	defer db.Close()
+
+	datacontext.SeedDb(db)
 }
 
 func TestBuildBindResponse(t *testing.T) {
@@ -57,6 +59,8 @@ func BenchmarkGetBindResponse(b *testing.B) {
 }
 
 func testGetBindResponse(tb testing.TB, messageID uint64, creds credentials) {
+	Db = datacontext.OpenDb(dbname, dbuser)
+
 	request := buildBindRequest(creds.username, creds.password)
 	response, _ := getBindResponse(messageID, request)
 	actual, found := parseLDAPResult(response)

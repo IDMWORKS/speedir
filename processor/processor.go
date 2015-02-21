@@ -2,16 +2,16 @@ package processor
 
 import (
 	"bufio"
+	"database/sql"
 	"log"
 	"net"
 
 	"github.com/mmitton/asn1-ber"
 	"github.com/mmitton/ldap"
-	"gopkg.in/gorp.v1"
 )
 
 // DbMap provides access to the data layer
-var DbMap *gorp.DbMap
+var Db *sql.DB
 
 // Verbose controls the verbosity of logging
 var Verbose = false

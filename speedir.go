@@ -1,12 +1,12 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 
 	"github.com/idmworks/speedir/datacontext"
 	"github.com/idmworks/speedir/processor"
 	"github.com/idmworks/speedir/server"
-	"gopkg.in/gorp.v1"
 )
 
 const (
@@ -22,9 +22,9 @@ var (
 
 func main() {
 	parseFlags()
-	dbmap := setupDb()
-	defer closeDb(dbmap)
-	setupProcessor(dbmap)
+	db := setupDb()
+	defer closeDb(db)
+	setupProcessor(db)
 	startServers()
 }
 
@@ -37,18 +37,18 @@ func parseFlags() {
 	verbose = *verbosePtr
 }
 
-func setupDb() *gorp.DbMap {
-	dbmap := datacontext.InitDb(dbname, dbuser)
-	datacontext.SeedDb(dbmap)
-	return dbmap
+func setupDb() *sql.DB {
+	db := datacontext.InitDb(dbname, dbuser)
+	datacontext.SeedDb(db)
+	return db
 }
 
-func closeDb(dbmap *gorp.DbMap) {
-	dbmap.Db.Close()
+func closeDb(db *sql.DB) {
+	db.Close()
 }
 
-func setupProcessor(dbmap *gorp.DbMap) {
-	processor.DbMap = dbmap
+func setupProcessor(db *sql.DB) {
+	processor.Db = db
 	processor.Verbose = verbose
 }
 

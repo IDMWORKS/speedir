@@ -1,12 +1,14 @@
 package datacontext
 
 import (
-	"database/sql"
 	"fmt"
 	"testing"
 
-	"github.com/idmworks/speedir/errors"
-	"gopkg.in/gorp.v1"
+	"github.com/idmworks/speedir/models"
+
+	"database/sql"
+
+	_ "github.com/lib/pq"
 )
 
 const (
@@ -14,34 +16,47 @@ const (
 	dbuser = "speedir_test"
 )
 
-func TestMain(t *testing.T) {
-	db := openPgDb(dbname, dbuser)
+var allTables = []string{
+	"users",
+}
 
-	// drop existing mapped tables before tests run
-	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
-	dbmap.DropTablesIfExists()
+func TestMain(t *testing.T) {
+	db := OpenDb(dbname, dbuser)
+	defer db.Close()
+
+	dropTablesIfExists(t, db)
+}
+
+func dropTablesIfExists(t *testing.T, db *sql.DB) {
+	for _, table := range allTables {
+		_, err := db.Exec(fmt.Sprintf(`DROP TABLE IF EXISTS %s`, table))
+		if err != nil {
+			t.Error("Error querying users table:", err)
+		}
+	}
 }
 
 func TestInitDb(t *testing.T) {
-	InitDb(dbname, dbuser)
+	db := InitDb(dbname, dbuser)
+	defer db.Close()
 
-	db := openPgDb(dbname, dbuser)
-	_, err := db.Query("SELECT * FROM users LIMIT 1;")
-	if err != nil {
-		t.Error("Error querying users table:", err)
+	for _, table := range allTables {
+		_, err := db.Exec(fmt.Sprintf(`SELECT * FROM %s LIMIT 1`, table))
+		if err != nil {
+			t.Error("Error querying table:", err)
+		}
 	}
 }
 
 func TestSeedDb(t *testing.T) {
-	dbmap := InitDb(dbname, dbuser)
-	SeedDb(dbmap)
+	db := InitDb(dbname, dbuser)
+	defer db.Close()
 
-	db := openPgDb(dbname, dbuser)
-	rows, err := db.Query("SELECT * FROM users WHERE username = $1;", "admin")
-	if err != nil {
-		t.Error("Error querying users table:", err)
-	}
-	if !rows.Next() {
+	SeedDb(db)
+
+	var count int
+	db.QueryRow(`SELECT COUNT(*) FROM users WHERE username = $1`, adminUsername).Scan(&count)
+	if count == 0 {
 		t.Error("No admin user seeded")
 	}
 }

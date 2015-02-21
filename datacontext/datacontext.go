@@ -1,13 +1,13 @@
 package datacontext
 
 import (
-	"database/sql"
-	"fmt"
-
 	"github.com/idmworks/speedir/errors"
 	"github.com/idmworks/speedir/models"
-	_ "github.com/lib/pq" //_ = imported for side effects
-	"gopkg.in/gorp.v1"
+
+	"database/sql"
+
+	// Imported for side-effects
+	_ "github.com/lib/pq"
 )
 
 const (
@@ -15,37 +15,47 @@ const (
 	adminPassword = "admin"
 )
 
-// InitDb creates / updates the DB schema as needed
-func InitDb(dbname string, dbuser string) *gorp.DbMap {
-	// open DB connection
-	db, err := sql.Open("postgres", fmt.Sprintf("user=%s dbname=%s sslmode=disable", dbuser, dbname))
+// InitDb opens the DB & updates the schema as needed
+func InitDb(dbname string, dbuser string) *sql.DB {
+	db := OpenDb(dbname, dbuser)
+
+	createTablesIfNotExists(db)
+
+	return db
+}
+
+// OpenDb opens the database
+func OpenDb(dbname string, dbuser string) *sql.DB {
+	db, err := sql.Open("postgres", "user="+dbuser+" dbname="+dbname+" sslmode=disable")
 	errors.CheckErr(err, "sql.Open failed")
 
-	// initialize gorp DB map
-	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
+	return db
+}
 
-	// map models to tables
-	dbmap.AddTableWithName(models.User{}, "users").SetKeys(true, "Id")
-
-	// create missing tables
-	err = dbmap.CreateTablesIfNotExists()
-	errors.CheckErr(err, "Create tables failed")
-
-	return dbmap
+func createTablesIfNotExists(db *sql.DB) {
+	statements := []string{
+		sqlCreateUsersTable,
+	}
+	for _, statement := range statements {
+		_, err := db.Exec(statement)
+		errors.CheckErr(err, "db.Exec failed")
+	}
 }
 
 // SeedDb seeds the DB with data necessary for the app to run
-func SeedDb(dbmap *gorp.DbMap) {
-	createAdminIfNotExists(dbmap)
+func SeedDb(db *sql.DB) {
+	createAdminIfNotExists(db)
 }
 
-func createAdminIfNotExists(dbmap *gorp.DbMap) {
-	count, err := dbmap.SelectInt("select count(id) from users where username=$1", adminUsername)
-	errors.CheckErr(err, "SelectInt failed")
+func createAdminIfNotExists(db *sql.DB) {
+	var count int
+	err := db.QueryRow(sqlSelectUserCountByUsername, adminUsername).Scan(&count)
+	errors.CheckErr(err, "db.QueryRow failed")
 
 	if count == 0 {
 		admin := models.CreateUser(adminUsername, adminPassword)
-		err = dbmap.Insert(&admin)
+		_, err := db.Exec(sqlInsertUserRow,
+			admin.Created, admin.Username, admin.PasswordHash, admin.PasswordSalt)
 		errors.CheckErr(err, "Insert failed")
 	}
 }
