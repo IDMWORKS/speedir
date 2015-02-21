@@ -18,6 +18,10 @@ const (
 
 var allTables = []string{
 	"users",
+	"object_classes",
+	"attribute_types",
+	"matching_rules",
+	"syntaxes",
 }
 
 func TestMain(t *testing.T) {
@@ -59,10 +63,24 @@ func TestSeedDb(t *testing.T) {
 	if count == 0 {
 		t.Error("No admin user seeded")
 	}
-}
 
-func openPgDb(dbname string, dbuser string) *sql.DB {
-	db, err := sql.Open("postgres", fmt.Sprintf("user=%s dbname=%s sslmode=disable", dbuser, dbname))
-	errors.CheckErr(err, "sql.Open failed")
-	return db
+	db.QueryRow(`SELECT COUNT(*) FROM syntaxes`).Scan(&count)
+	if count != len(models.LDAPv3Syntaxes) {
+		t.Error("Wrong number of rows seeded")
+	}
+
+	db.QueryRow(`SELECT COUNT(*) FROM matching_rules`).Scan(&count)
+	if count != len(models.LDAPv3MatchingRules) {
+		t.Error("Wrong number of rows seeded")
+	}
+
+	db.QueryRow(`SELECT COUNT(*) FROM attribute_types`).Scan(&count)
+	if count != len(models.LDAPv3AttributeTypes) {
+		t.Error("Wrong number of rows seeded")
+	}
+
+	db.QueryRow(`SELECT COUNT(*) FROM object_classes`).Scan(&count)
+	if count != len(models.LDAPv3ObjectClasses) {
+		t.Error("Wrong number of rows seeded")
+	}
 }
