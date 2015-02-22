@@ -4,9 +4,6 @@ import (
 	"log"
 	"net"
 
-	"github.com/idmworks/speedir/datacontext"
-	"github.com/idmworks/speedir/errors"
-
 	"github.com/mmitton/asn1-ber"
 	"github.com/mmitton/ldap"
 )
@@ -26,12 +23,7 @@ func (proc *Processor) getBindResponse(messageID uint64, request *ber.Packet) (r
 	auth := request.Children[2]
 	password := auth.Data.String()
 
-	users := make(datacontext.DBUsers, 0)
-
-	// need to patch the leaky abstraction of SQL here
-	rows, err := proc.DC.DB.Query(datacontext.SqlSelectUserByUsername, username)
-	errors.CheckErr(err, "Select failed")
-	users.Scan(rows)
+	users := proc.DC.SelectUsersByUsername(username)
 
 	result = ldap.LDAPResultProtocolError
 

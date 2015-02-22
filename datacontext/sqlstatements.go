@@ -21,7 +21,7 @@ VALUES
 ($1, $2, $3, $4)`
 	sqlSelectUserCountByUsername = `
 SELECT COUNT(id) FROM users WHERE username = $1`
-	SqlSelectUserByUsername = `
+	sqlSelectUserByUsername = `
 SELECT id, created, username, passwordhash, passwordsalt FROM users WHERE username = $1`
 
 	// Syntaxes table
