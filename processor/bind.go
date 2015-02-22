@@ -6,7 +6,6 @@ import (
 
 	"github.com/idmworks/speedir/datacontext"
 	"github.com/idmworks/speedir/errors"
-	"github.com/idmworks/speedir/models"
 
 	"github.com/mmitton/asn1-ber"
 	"github.com/mmitton/ldap"
@@ -27,7 +26,7 @@ func (proc *Processor) getBindResponse(messageID uint64, request *ber.Packet) (r
 	auth := request.Children[2]
 	password := auth.Data.String()
 
-	users := make(models.Users, 0)
+	users := make(datacontext.DBUsers, 0)
 
 	// need to patch the leaky abstraction of SQL here
 	rows, err := proc.DC.DB.Query(datacontext.SqlSelectUserByUsername, username)
