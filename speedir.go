@@ -21,8 +21,7 @@ var (
 
 func main() {
 	parseFlags()
-	dc := &datacontext.DataContext{DBName: dbname, DBUser: dbuser}
-	setupDb(dc)
+	dc := setupDb()
 	defer dc.CloseDb()
 	proc := setupProcessor(dc)
 	startServers(proc)
@@ -37,9 +36,11 @@ func parseFlags() {
 	verbose = *verbosePtr
 }
 
-func setupDb(dc *datacontext.DataContext) {
+func setupDb() *datacontext.DataContext {
+	dc := &datacontext.DataContext{DBName: dbname, DBUser: dbuser}
 	dc.InitDb()
 	dc.SeedDb()
+	return dc
 }
 
 func setupProcessor(dc *datacontext.DataContext) *processor.Processor {
