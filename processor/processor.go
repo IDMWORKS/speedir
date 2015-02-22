@@ -81,7 +81,7 @@ func (proc *Processor) sendLdapResponse(conn net.Conn, packet *ber.Packet) {
 	}
 }
 
-func (proc *Processor) getLdapResponse(messageID uint64, ldapResult int) *ber.Packet {
+func (proc *Processor) buildLdapResponse(messageID uint64, ldapResult int) *ber.Packet {
 	packet := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
 	packet.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagInteger, messageID, "MessageID"))
 	return packet

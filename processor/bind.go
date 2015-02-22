@@ -49,7 +49,7 @@ func (proc *Processor) getBindResponse(messageID uint64, request *ber.Packet) (r
 }
 
 func (proc *Processor) buildBindResponse(messageID uint64, ldapResult int) *ber.Packet {
-	ldapResponse := proc.getLdapResponse(messageID, ldapResult)
+	ldapResponse := proc.buildLdapResponse(messageID, ldapResult)
 	bindResponse := ber.Encode(ber.ClassApplication, ber.TypeConstructed, ldap.ApplicationBindResponse, nil, "Bind Response")
 	bindResponse.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagEnumerated, uint64(ldapResult), "LDAP Result"))
 
