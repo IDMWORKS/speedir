@@ -49,7 +49,9 @@ func setupProcessor(dc *datacontext.DataContext) *processor.Processor {
 
 func startServers(proc *processor.Processor) {
 	// start first TCP server in a goroutine
-	go server.ServeTCP(listenTCPPort, false, proc.HandleRequest)
+	tcpServer := &server.Server{Port: listenTCPPort, Secure: false, Handler: proc.HandleRequest}
+	go tcpServer.ServeTCP()
 	// start second TCP (TLS) server in the main thread
-	server.ServeTCP(listenTLSPort, true, proc.HandleRequest)
+	tlsServer := &server.Server{Port: listenTLSPort, Secure: true, Handler: proc.HandleRequest}
+	tlsServer.ServeTCP()
 }

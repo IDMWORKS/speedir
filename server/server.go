@@ -15,11 +15,17 @@ const (
 
 type requestHandler func(conn net.Conn)
 
+type Server struct {
+	Port    int
+	Secure  bool
+	Handler requestHandler
+}
+
 // ServeTCP starts a TCP server on port, optionally secure with a requestHandler
-func ServeTCP(port int, secure bool, handler requestHandler) {
-	listener := startListening(port, secure)
+func (server *Server) ServeTCP() {
+	listener := startListening(server.Port, server.Secure)
 	defer listener.Close()
-	handleConnections(listener, handler)
+	handleConnections(listener, server.Handler)
 }
 
 func startListening(port int, secure bool) net.Listener {
