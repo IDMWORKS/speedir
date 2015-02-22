@@ -24,11 +24,7 @@ type requestProcessor struct {
 	handler  requestHandler
 }
 
-var requestProcessors []requestProcessor
-
-func init() {
-	requestProcessors = make([]requestProcessor, 0)
-}
+var requestProcessors = make([]requestProcessor, 0)
 
 // HandleRequest handles incoming LDAPv3 requests
 func (proc *Processor) HandleRequest(conn net.Conn) {
