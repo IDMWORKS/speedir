@@ -36,7 +36,7 @@ func (user *DBUser) scan(rows *sql.Rows) {
 	errors.CheckErr(err, "rows.Scan failed")
 }
 
-// SelectUsersByUsername returns a slicse of DBUser matching username
+// SelectUsersByUsername returns a slice of DBUser matching username
 func (dc *DataContext) SelectUsersByUsername(username string) DBUsers {
 	users := make(DBUsers, 0)
 
