@@ -7,7 +7,6 @@ import (
 
 	"github.com/idmworks/speedir/datacontext"
 	"github.com/mmitton/asn1-ber"
-	"github.com/mmitton/ldap"
 )
 
 type Processor struct {
@@ -15,10 +14,25 @@ type Processor struct {
 	DC *datacontext.DataContext
 	// Verbose controls the verbosity of logging
 	Verbose bool
+	conn    net.Conn
+}
+
+type requestHandler func(proc *Processor, messageID uint64, request *ber.Packet)
+
+type requestProcessor struct {
+	ldapCode uint8
+	handler  requestHandler
+}
+
+var requestProcessors []requestProcessor
+
+func init() {
+	requestProcessors = make([]requestProcessor, 0)
 }
 
 // HandleRequest handles incoming LDAPv3 requests
 func (proc *Processor) HandleRequest(conn net.Conn) {
+	proc.conn = conn
 	// continuously read from the connection
 	for {
 		packet, err := ber.ReadPacket(bufio.NewReader(conn))
@@ -40,28 +54,30 @@ func (proc *Processor) HandleRequest(conn net.Conn) {
 			return
 		}
 
-		proc.parsePacket(conn, packet)
+		proc.parsePacket(packet)
 	}
 }
 
-func (proc *Processor) parsePacket(conn net.Conn, packet *ber.Packet) {
+func (proc *Processor) parsePacket(packet *ber.Packet) {
 	messageID := packet.Children[0].Value.(uint64)
 	request := packet.Children[1]
 
 	if request.ClassType == ber.ClassApplication &&
 		request.TagType == ber.TypeConstructed {
-
-		switch request.Tag {
-		case ldap.ApplicationBindRequest:
-			proc.handleBindRequest(conn, messageID, request)
-		default:
+		var handled bool
+		for _, reqProc := range requestProcessors {
+			if reqProc.ldapCode == request.Tag {
+				reqProc.handler(proc, messageID, request)
+				handled = true
+			}
+		}
+		if !handled {
 			log.Println("LDAPv3 app code not implemented:", request.Tag)
 		}
-
 	}
 }
 
-func (proc *Processor) sendLdapResponse(conn net.Conn, packet *ber.Packet) {
+func (proc *Processor) sendLdapResponse(packet *ber.Packet) {
 	buf := packet.Bytes()
 
 	if proc.Verbose {
@@ -69,7 +85,7 @@ func (proc *Processor) sendLdapResponse(conn net.Conn, packet *ber.Packet) {
 	}
 
 	for len(buf) > 0 {
-		n, err := conn.Write(buf)
+		n, err := proc.conn.Write(buf)
 		if err != nil {
 			log.Printf("Error Sending Message: %s\n", err)
 			return

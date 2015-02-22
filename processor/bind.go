@@ -2,20 +2,27 @@ package processor
 
 import (
 	"log"
-	"net"
 
 	"github.com/mmitton/asn1-ber"
 	"github.com/mmitton/ldap"
 )
 
-func (proc *Processor) handleBindRequest(conn net.Conn, messageID uint64, request *ber.Packet) {
+func init() {
+	requestProcessors = append(requestProcessors,
+		requestProcessor{
+			ldapCode: ldap.ApplicationBindRequest,
+			handler:  handleBindRequest,
+		})
+}
+
+func handleBindRequest(proc *Processor, messageID uint64, request *ber.Packet) {
 	response, result := proc.getBindResponse(messageID, request)
 
 	if result != ldap.LDAPResultSuccess {
-		defer conn.Close()
+		defer proc.conn.Close()
 	}
 
-	proc.sendLdapResponse(conn, response)
+	proc.sendLdapResponse(response)
 }
 
 func (proc *Processor) getBindResponse(messageID uint64, request *ber.Packet) (response *ber.Packet, result int) {
