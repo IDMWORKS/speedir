@@ -33,7 +33,7 @@ func (proc *Processor) HandleRequest(conn net.Conn) {
 	for {
 		packet, err := ber.ReadPacket(bufio.NewReader(conn))
 
-		if proc.Verbose {
+		if proc.Verbose && (packet != nil) {
 			ber.PrintPacket(packet)
 		}
 
