@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/idmworks/speedir/datacontext"
-	"github.com/mmitton/asn1-ber"
-	"github.com/mmitton/ldap"
+	"github.com/mavricknz/asn1-ber"
+	"github.com/mavricknz/ldap"
 )
 
 const (

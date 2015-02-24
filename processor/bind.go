@@ -3,8 +3,8 @@ package processor
 import (
 	"log"
 
-	"github.com/mmitton/asn1-ber"
-	"github.com/mmitton/ldap"
+	"github.com/mavricknz/asn1-ber"
+	"github.com/mavricknz/ldap"
 )
 
 func init() {
@@ -26,7 +26,7 @@ func handleBindRequest(proc *Processor, messageID uint64, request *ber.Packet) {
 }
 
 func (proc *Processor) getBindResponse(messageID uint64, request *ber.Packet) (response *ber.Packet, result int) {
-	username := request.Children[1].Value.(string)
+	username := request.Children[1].ValueString()
 	auth := request.Children[2]
 	password := auth.Data.String()
 

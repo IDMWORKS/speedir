@@ -6,7 +6,7 @@ import (
 	"net"
 
 	"github.com/idmworks/speedir/datacontext"
-	"github.com/mmitton/asn1-ber"
+	"github.com/mavricknz/asn1-ber"
 )
 
 type Processor struct {
