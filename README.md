@@ -3,6 +3,7 @@ The speedir project is an exercise in learning both the Go programming language 
 
 ## Standards
 * Lightweight Directory Access Protocol (LDAPv3): [RFC 4511](http://tools.ietf.org/html/rfc4511)
+* LDAP Directory Information Models: [RFC 4512](http://tools.ietf.org/html/rfc4512)
 * LDAP Syntaxes and Matching Rules: [RFC 4517](http://tools.ietf.org/html/rfc4517)
 * LDAP Schema for User Applications: [RFC 4519](http://tools.ietf.org/html/rfc4519)
 * Abstract Syntax Notation One (ASN.1 BER): [X.690](http://www.itu.int/ITU-T/studygroups/com17/languages/X.690-0207.pdf)
