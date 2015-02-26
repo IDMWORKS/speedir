@@ -112,10 +112,10 @@ SELECT COUNT(oid) FROM object_classes`
 SELECT name
 	, oid
 	, super
-	, names
+	, array_to_json(names)
 	, flags
-	, must_attributes
-	, may_attributes
+	, array_to_json(must_attributes)
+	, array_to_json(may_attributes)
 FROM object_classes`
 	sqlInsertObjectClassRow = `
 INSERT INTO object_classes
