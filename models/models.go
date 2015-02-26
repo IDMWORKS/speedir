@@ -6,9 +6,9 @@ import (
 	"strconv"
 )
 
-type StringArray []string
+type StringSlice []string
 
-func (names StringArray) Value() (driver.Value, error) {
+func (names StringSlice) Value() (driver.Value, error) {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("{")

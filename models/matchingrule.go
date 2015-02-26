@@ -2,13 +2,15 @@ package models
 
 // MatchingRule model in the DB
 type MatchingRule struct {
-	OID      string
-	SyntaxID string
-	Names    StringArray
+	Name   string
+	OID    string
+	Syntax string
+	Names  StringSlice
 }
 
 const (
-	// ObjectIdentifierMatchRuleID ... http://www.ietf.org/rfc/rfc4517.txt
+	// OIDs
+	// ObjectIdentifierMatchRuleID ... http://tools.ietf.org/html/rfc4517
 	ObjectIdentifierMatchRuleID          = "2.5.13.0"
 	DistinguishedNameMatchRuleID         = "2.5.13.1"
 	CaseIgnoreMatchRuleID                = "2.5.13.2"
@@ -41,169 +43,204 @@ const (
 	CaseExactIA5MatchRuleID              = "1.3.6.1.4.1.1466.109.114.1"
 	CaseIgnoreIA5MatchruleID             = "1.3.6.1.4.1.1466.109.114.2"
 	CaseIgnoreIA5SubstrMatchRuleID       = "1.3.6.1.4.1.1466.109.114.3"
+
+	// names
+	// ObjectIdentifierMatchRule ... http://tools.ietf.org/html/rfc4517
+	ObjectIdentifierMatchRule          = "objectIdentifierMatch"
+	DistinguishedNameMatchRule         = "distinguishedNameMatch"
+	CaseIgnoreMatchRule                = "caseIgnoreMatch"
+	CaseIgnoreOrderingMatchRule        = "caseIgnoreOrderingMatch"
+	CaseIgnoreSubstrMatchRule          = "caseIgnoreSubstringsMatch"
+	CaseExactMatchRule                 = "caseExactMatch"
+	CaseExactOrderingMatchRule         = "caseExactOrderingMatch"
+	CaseExactSubstrMatchRule           = "caseExactSubstringsMatch"
+	NumericStringMatchRule             = "numericStringMatch"
+	NumericStringOrderingMatchRule     = "numericStringOrderingMatch"
+	NumericStringSubstrMatchRule       = "numericStringSubstringsMatch"
+	CaseIgnoreListMatchRule            = "caseIgnoreListMatch"
+	CaseIgnoreListSubstrMatchRule      = "caseIgnoreListSubstringsMatch"
+	BooleanMatchRule                   = "booleanMatch"
+	IntegerMatchRule                   = "integerMatch"
+	IntegerOrderingMatchRule           = "integerOrderingMatch"
+	BitStringMatchRule                 = "bitStringMatch"
+	OctetStringMatchRule               = "octetStringMatch"
+	OctetStringOrderingMatchRule       = "octetStringOrderingMatch"
+	TelephoneNumberMatchRule           = "telephoneNumberMatch"
+	TelephoneNumberSubstrMatchRule     = "telephoneNumberSubstringsMatch"
+	UniqueMemberMatchRule              = "uniqueMemberMatch"
+	GeneralizedTimeMatchRule           = "generalizedTimeMatch"
+	GeneralizedTimeOrderingMatchRule   = "generalizedTimeOrderingMatch"
+	IntegerFirstCompMatchRule          = "integerFirstComponentMatch"
+	ObjectIdentifierFirstCompMatchRule = "objectIdentifierFirstComponentMatch"
+	DirectoryStringFirstCompMatchRule  = "directoryStringFirstComponentMatch"
+	KeywordMatchRule                   = "keywordMatch"
+	WordMatchRule                      = "wordMatch"
+	CaseExactIA5MatchRule              = "caseExactIA5Match"
+	CaseIgnoreIA5MatchRule             = "caseIgnoreIA5Match"
+	CaseIgnoreIA5SubstrMatchRule       = "caseIgnoreIA5SubstringsMatch"
 )
 
 // LDAPv3MatchingRules represents the standard LDAPv3 Matching Rules
 // http://www.ietf.org/rfc/rfc4517.txt
 var LDAPv3MatchingRules = [...]MatchingRule{
 	MatchingRule{
-		OID:      BitStringMatchRuleID,
-		SyntaxID: BitStringSyntaxID,
-		Names:    StringArray{"bitStringMatch"},
+		OID:    BitStringMatchRuleID,
+		Syntax: BitStringSyntaxID,
+		Name:   BitStringMatchRule,
 	},
 	MatchingRule{
-		OID:      BooleanMatchRuleID,
-		SyntaxID: BooleanSyntaxID,
-		Names:    StringArray{"booleanMatch"},
+		OID:    BooleanMatchRuleID,
+		Syntax: BooleanSyntaxID,
+		Name:   BooleanMatchRule,
 	},
 	MatchingRule{
-		OID:      CaseExactIA5MatchRuleID,
-		SyntaxID: IA5StringSyntaxID,
-		Names:    StringArray{"caseExactIA5Match"},
+		OID:    CaseExactIA5MatchRuleID,
+		Syntax: IA5StringSyntaxID,
+		Name:   CaseExactIA5MatchRule,
 	},
 	MatchingRule{
-		OID:      CaseExactMatchRuleID,
-		SyntaxID: DirectoryStringSyntaxID,
-		Names:    StringArray{"caseExactMatch"},
+		OID:    CaseExactMatchRuleID,
+		Syntax: DirectoryStringSyntaxID,
+		Name:   CaseExactMatchRule,
 	},
 	MatchingRule{
-		OID:      CaseExactOrderingMatchRuleID,
-		SyntaxID: DirectoryStringSyntaxID,
-		Names:    StringArray{"caseExactOrderingMatch"},
+		OID:    CaseExactOrderingMatchRuleID,
+		Syntax: DirectoryStringSyntaxID,
+		Name:   CaseExactOrderingMatchRule,
 	},
 	MatchingRule{
-		OID:      CaseExactSubstrMatchRuleID,
-		SyntaxID: SubstringAssertionSyntaxID,
-		Names:    StringArray{"caseExactSubstringsMatch"},
+		OID:    CaseExactSubstrMatchRuleID,
+		Syntax: SubstringAssertionSyntaxID,
+		Name:   CaseExactSubstrMatchRule,
 	},
 	MatchingRule{
-		OID:      CaseIgnoreIA5MatchruleID,
-		SyntaxID: IA5StringSyntaxID,
-		Names:    StringArray{"caseIgnoreIA5Match"},
+		OID:    CaseIgnoreIA5MatchruleID,
+		Syntax: IA5StringSyntaxID,
+		Name:   CaseIgnoreIA5MatchRule,
 	},
 	MatchingRule{
-		OID:      CaseIgnoreIA5SubstrMatchRuleID,
-		SyntaxID: SubstringAssertionSyntaxID,
-		Names:    StringArray{"caseIgnoreIA5SubstringsMatch"},
+		OID:    CaseIgnoreIA5SubstrMatchRuleID,
+		Syntax: SubstringAssertionSyntaxID,
+		Name:   CaseIgnoreIA5SubstrMatchRule,
 	},
 	MatchingRule{
-		OID:      CaseIgnoreListMatchRuleID,
-		SyntaxID: PostalAddressSyntaxID,
-		Names:    StringArray{"caseIgnoreListMatch"},
+		OID:    CaseIgnoreListMatchRuleID,
+		Syntax: PostalAddressSyntaxID,
+		Name:   CaseIgnoreListMatchRule,
 	},
 	MatchingRule{
-		OID:      CaseIgnoreListSubstrMatchRuleID,
-		SyntaxID: SubstringAssertionSyntaxID,
-		Names:    StringArray{"caseIgnoreListSubstringsMatch"},
+		OID:    CaseIgnoreListSubstrMatchRuleID,
+		Syntax: SubstringAssertionSyntaxID,
+		Name:   CaseIgnoreListSubstrMatchRule,
 	},
 	MatchingRule{
-		OID:      CaseIgnoreMatchRuleID,
-		SyntaxID: DirectoryStringSyntaxID,
-		Names:    StringArray{"caseIgnoreMatch"},
+		OID:    CaseIgnoreMatchRuleID,
+		Syntax: DirectoryStringSyntaxID,
+		Name:   CaseIgnoreMatchRule,
 	},
 	MatchingRule{
-		OID:      CaseIgnoreOrderingMatchRuleID,
-		SyntaxID: DirectoryStringSyntaxID,
-		Names:    StringArray{"caseIgnoreOrderingMatch"},
+		OID:    CaseIgnoreOrderingMatchRuleID,
+		Syntax: DirectoryStringSyntaxID,
+		Name:   CaseIgnoreOrderingMatchRule,
 	},
 	MatchingRule{
-		OID:      CaseIgnoreSubstrMatchRuleID,
-		SyntaxID: SubstringAssertionSyntaxID,
-		Names:    StringArray{"caseIgnoreSubstringsMatch"},
+		OID:    CaseIgnoreSubstrMatchRuleID,
+		Syntax: SubstringAssertionSyntaxID,
+		Name:   CaseIgnoreSubstrMatchRule,
 	},
 	MatchingRule{
-		OID:      DirectoryStringFirstCompMatchRuleID,
-		SyntaxID: DirectoryStringSyntaxID,
-		Names:    StringArray{"directoryStringFirstComponentMatch"},
+		OID:    DirectoryStringFirstCompMatchRuleID,
+		Syntax: DirectoryStringSyntaxID,
+		Name:   DirectoryStringFirstCompMatchRule,
 	},
 	MatchingRule{
-		OID:      DistinguishedNameMatchRuleID,
-		SyntaxID: DistinguishedNameSyntaxID,
-		Names:    StringArray{"distinguishedNameMatch"},
+		OID:    DistinguishedNameMatchRuleID,
+		Syntax: DistinguishedNameSyntaxID,
+		Name:   DistinguishedNameMatchRule,
 	},
 	MatchingRule{
-		OID:      GeneralizedTimeMatchRuleID,
-		SyntaxID: GeneralizedTimeSyntaxID,
-		Names:    StringArray{"generalizedTimeMatch"},
+		OID:    GeneralizedTimeMatchRuleID,
+		Syntax: GeneralizedTimeSyntaxID,
+		Name:   GeneralizedTimeMatchRule,
 	},
 	MatchingRule{
-		OID:      GeneralizedTimeOrderingMatchRuleID,
-		SyntaxID: GeneralizedTimeSyntaxID,
-		Names:    StringArray{"generalizedTimeOrderingMatch"},
+		OID:    GeneralizedTimeOrderingMatchRuleID,
+		Syntax: GeneralizedTimeSyntaxID,
+		Name:   GeneralizedTimeOrderingMatchRule,
 	},
 	MatchingRule{
-		OID:      IntegerFirstCompMatchRuleID,
-		SyntaxID: IntegerSyntaxID,
-		Names:    StringArray{"integerFirstComponentMatch"},
+		OID:    IntegerFirstCompMatchRuleID,
+		Syntax: IntegerSyntaxID,
+		Name:   IntegerFirstCompMatchRule,
 	},
 	MatchingRule{
-		OID:      IntegerMatchRuleID,
-		SyntaxID: IntegerSyntaxID,
-		Names:    StringArray{"integerMatch"},
+		OID:    IntegerMatchRuleID,
+		Syntax: IntegerSyntaxID,
+		Name:   IntegerMatchRule,
 	},
 	MatchingRule{
-		OID:      IntegerOrderingMatchRuleID,
-		SyntaxID: IntegerSyntaxID,
-		Names:    StringArray{"integerOrderingMatch"},
+		OID:    IntegerOrderingMatchRuleID,
+		Syntax: IntegerSyntaxID,
+		Name:   IntegerOrderingMatchRule,
 	},
 	MatchingRule{
-		OID:      KeywordMatchRuleID,
-		SyntaxID: DirectoryStringSyntaxID,
-		Names:    StringArray{"keywordMatch"},
+		OID:    KeywordMatchRuleID,
+		Syntax: DirectoryStringSyntaxID,
+		Name:   KeywordMatchRule,
 	},
 	MatchingRule{
-		OID:      NumericStringMatchRuleID,
-		SyntaxID: NumericStringSyntaxID,
-		Names:    StringArray{"numericStringMatch"},
+		OID:    NumericStringMatchRuleID,
+		Syntax: NumericStringSyntaxID,
+		Name:   NumericStringMatchRule,
 	},
 	MatchingRule{
-		OID:      NumericStringOrderingMatchRuleID,
-		SyntaxID: NumericStringSyntaxID,
-		Names:    StringArray{"numericStringOrderingMatch"},
+		OID:    NumericStringOrderingMatchRuleID,
+		Syntax: NumericStringSyntaxID,
+		Name:   NumericStringOrderingMatchRule,
 	},
 	MatchingRule{
-		OID:      NumericStringSubstrMatchRuleID,
-		SyntaxID: SubstringAssertionSyntaxID,
-		Names:    StringArray{"numericStringSubstringsMatch"},
+		OID:    NumericStringSubstrMatchRuleID,
+		Syntax: SubstringAssertionSyntaxID,
+		Name:   NumericStringSubstrMatchRule,
 	},
 	MatchingRule{
-		OID:      ObjectIdentifierFirstCompMatchRuleID,
-		SyntaxID: OIDSyntaxID,
-		Names:    StringArray{"objectIdentifierFirstComponentMatch"},
+		OID:    ObjectIdentifierFirstCompMatchRuleID,
+		Syntax: OIDSyntaxID,
+		Name:   ObjectIdentifierFirstCompMatchRule,
 	},
 	MatchingRule{
-		OID:      ObjectIdentifierMatchRuleID,
-		SyntaxID: OIDSyntaxID,
-		Names:    StringArray{"objectIdentifierMatch"},
+		OID:    ObjectIdentifierMatchRuleID,
+		Syntax: OIDSyntaxID,
+		Name:   ObjectIdentifierMatchRule,
 	},
 	MatchingRule{
-		OID:      OctetStringMatchRuleID,
-		SyntaxID: OctetStringSyntaxID,
-		Names:    StringArray{"octetStringMatch"},
+		OID:    OctetStringMatchRuleID,
+		Syntax: OctetStringSyntaxID,
+		Name:   OctetStringMatchRule,
 	},
 	MatchingRule{
-		OID:      OctetStringOrderingMatchRuleID,
-		SyntaxID: OctetStringSyntaxID,
-		Names:    StringArray{"octetStringOrderingMatch"},
+		OID:    OctetStringOrderingMatchRuleID,
+		Syntax: OctetStringSyntaxID,
+		Name:   OctetStringOrderingMatchRule,
 	},
 	MatchingRule{
-		OID:      TelephoneNumberMatchRuleID,
-		SyntaxID: TelephoneNumberSyntaxID,
-		Names:    StringArray{"telephoneNumberMatch"},
+		OID:    TelephoneNumberMatchRuleID,
+		Syntax: TelephoneNumberSyntaxID,
+		Name:   TelephoneNumberMatchRule,
 	},
 	MatchingRule{
-		OID:      TelephoneNumberSubstrMatchRuleID,
-		SyntaxID: SubstringAssertionSyntaxID,
-		Names:    StringArray{"telephoneNumberSubstringsMatch"},
+		OID:    TelephoneNumberSubstrMatchRuleID,
+		Syntax: SubstringAssertionSyntaxID,
+		Name:   TelephoneNumberSubstrMatchRule,
 	},
 	MatchingRule{
-		OID:      UniqueMemberMatchRuleID,
-		SyntaxID: NameAndOptionalUIDSyntaxID,
-		Names:    StringArray{"uniqueMemberMatch"},
+		OID:    UniqueMemberMatchRuleID,
+		Syntax: NameAndOptionalUIDSyntaxID,
+		Name:   UniqueMemberMatchRule,
 	},
 	MatchingRule{
-		OID:      WordMatchRuleID,
-		SyntaxID: DirectoryStringSyntaxID,
-		Names:    StringArray{"wordMatch"},
+		OID:    WordMatchRuleID,
+		Syntax: DirectoryStringSyntaxID,
+		Name:   WordMatchRule,
 	},
 }

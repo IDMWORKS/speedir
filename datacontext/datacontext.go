@@ -99,7 +99,7 @@ func createMatchingRulesIfNotExists(db *sql.DB) {
 	if count == 0 {
 		for _, rule := range models.LDAPv3MatchingRules {
 			_, err := db.Exec(sqlInsertMatchingRuleRow,
-				rule.OID, rule.SyntaxID, rule.Names)
+				rule.Name, rule.OID, rule.Syntax, rule.Names)
 			errors.CheckErr(err, "Insert failed")
 		}
 	}
@@ -113,8 +113,8 @@ func createAttributeTypesIfNotExists(db *sql.DB) {
 	if count == 0 {
 		for _, attr := range models.LDAPv3AttributeTypes {
 			_, err := db.Exec(sqlInsertAttributeTypeRow,
-				attr.OID, attr.SyntaxID, attr.SuperID, attr.Names, attr.Flags,
-				attr.EqualityMatchID, attr.SubstrMatchID, attr.OrderingMatchID)
+				attr.Name, attr.OID, attr.Syntax, attr.Super, attr.Names, attr.Flags,
+				attr.Usage, attr.EqualityMatch, attr.SubstrMatch, attr.OrderingMatch)
 			errors.CheckErr(err, "Insert failed")
 		}
 	}
@@ -128,7 +128,7 @@ func createObjectClassesIfNotExists(db *sql.DB) {
 	if count == 0 {
 		for _, class := range models.LDAPv3ObjectClasses {
 			_, err := db.Exec(sqlInsertObjectClassRow,
-				class.OID, class.SuperID, class.Names, class.Flags,
+				class.Name, class.OID, class.Super, class.Names, class.Flags,
 				class.MustAttributes, class.MayAttributes)
 			errors.CheckErr(err, "Insert failed")
 		}
