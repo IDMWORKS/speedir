@@ -73,14 +73,70 @@ func (proc *Processor) processSearchRequest(messageID uint64, request *ber.Packe
 	return ldap.LDAPResultSuccess
 }
 
-	log.Println(criteria)
 func (proc *Processor) buildSearchEntryResponse(messageID uint64, searchReq ldap.SearchRequest) *ber.Packet {
 	return nil
 }
 
-	log.Println(criteria)
-	return nil
 func (proc *Processor) buildSchemaResponse(messageID uint64, searchReq ldap.SearchRequest) *ber.Packet {
+	ldapResponse := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
+	ldapResponse.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagInteger, messageID, "MessageID"))
+
+	searchResponse := ber.Encode(ber.ClassApplication, ber.TypeConstructed, ldap.ApplicationSearchResultEntry, nil, "Search Result Entry")
+	searchResponse.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimative, ber.TagOctetString, cnSchema, "objectName	LDAPDN"))
+
+	attributesPacket := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "Attributes")
+
+	appendSchemaAttributes(attributesPacket)
+
+	atts := searchReq.Attributes
+
+	if i := sort.SearchStrings(atts, "ldapSyntaxes"); i < len(atts) {
+		proc.appendSyntaxAttributes(attributesPacket)
+	}
+
+	if i := sort.SearchStrings(atts, "objectClasses"); i < len(atts) {
+		proc.appendObjectClassAttributes(attributesPacket)
+	}
+
+	searchResponse.AppendChild(attributesPacket)
+	ldapResponse.AppendChild(searchResponse)
+	return ldapResponse
+}
+
+func appendSchemaAttributes(attributesPacket *ber.Packet) {
+	attributesPacket.AppendChild(buildAttributePacket("cn", "schema"))
+	attributesPacket.AppendChild(buildAttributePacket("objectClass", "top"))
+	attributesPacket.AppendChild(buildAttributePacket("objectClass", "ldapSubentry"))
+	attributesPacket.AppendChild(buildAttributePacket("objectClass", "subschema"))
+}
+
+func (proc *Processor) appendSyntaxAttributes(attributesPacket *ber.Packet) {
+	syntaxes := proc.DC.SelectAllSyntaxes()
+	values := []string{}
+	for _, syntax := range syntaxes {
+		values = append(values, fmt.Sprintf(
+			"( %s DESC '%s' )",
+			syntax.OID,
+			syntax.Description))
+	}
+	attributesPacket.AppendChild(buildAttributePacket("ldapSyntaxes", values...))
+}
+
+func (proc *Processor) appendObjectClassAttributes(attributesPacket *ber.Packet) {
+	objectClasses := proc.DC.SelectAllObjectClasses()
+	values := []string{}
+	for _, objectClass := range objectClasses {
+		values = append(values, fmt.Sprintf(
+			"( %s NAME '%s' SUP %s %s %s %s )",
+			objectClass.OID,
+			objectClass.Name,
+			objectClass.Super.String,
+			objectClass.FlagsString(),
+			objectClass.MustString(),
+			objectClass.MayString()),
+		)
+	}
+	attributesPacket.AppendChild(buildAttributePacket("objectClasses", values...))
 }
 
 func (proc *Processor) buildSubschemaResponse(messageID uint64, searchReq ldap.SearchRequest) *ber.Packet {
