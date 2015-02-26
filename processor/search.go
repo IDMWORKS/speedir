@@ -1,7 +1,8 @@
 package processor
 
 import (
-	"log"
+	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/mavricknz/asn1-ber"
@@ -26,51 +27,43 @@ func handleSearchRequest(proc *Processor, messageID uint64, request *ber.Packet)
 	proc.sendLdapResponse(ldapResponse)
 }
 
-type searchCriteria struct {
-	baseDn       string
-	scope        uint64
-	derefAliases uint64
-	sizeLimit    uint64
-	timeLimit    uint64
-	typesOnly    bool
-	filter       string
-	attributes   []string
-}
-
 func (proc *Processor) processSearchRequest(messageID uint64, request *ber.Packet) (ldapResult int) {
-	criteria := &searchCriteria{
-		baseDn:       request.Children[0].ValueString(),
-		scope:        request.Children[1].Value.(uint64),
-		derefAliases: request.Children[2].Value.(uint64),
-		sizeLimit:    request.Children[3].Value.(uint64),
-		timeLimit:    request.Children[4].Value.(uint64),
-		typesOnly:    request.Children[5].Value.(bool),
+	searchReq := &ldap.SearchRequest{
+		BaseDN:       request.Children[0].ValueString(),
+		Scope:        int(request.Children[1].Value.(uint64)),
+		DerefAliases: int(request.Children[2].Value.(uint64)),
+		SizeLimit:    int(request.Children[3].Value.(uint64)),
+		TimeLimit:    int(request.Children[4].Value.(uint64)),
+		TypesOnly:    request.Children[5].Value.(bool),
+		Attributes:   []string{},
 	}
-	criteria.filter, _ = ldap.DecompileFilter(request.Children[6])
+	searchReq.Filter, _ = ldap.DecompileFilter(request.Children[6])
 
 	subschema := false
 	for _, attr := range request.Children[7].Children {
 		attrName := attr.ValueString()
 		if attrName == "1.1" {
 			// http://www.alvestrand.no/objectid/1.1.html
-			criteria.attributes = nil
+			searchReq.Attributes = nil
 			break
 		} else if strings.EqualFold(attrName, "subschemaSubentry") {
 			subschema = true
 			break
 		} else {
-			criteria.attributes = append(criteria.attributes, attrName)
+			searchReq.Attributes = append(searchReq.Attributes, attrName)
 		}
 	}
+
+	sort.Strings(searchReq.Attributes)
 
 	var ldapResponse *ber.Packet
 	switch {
 	case subschema:
-		ldapResponse = proc.buildSubschemaResponse(messageID, *criteria)
-	case strings.EqualFold(criteria.baseDn, cnSchema):
-		ldapResponse = proc.buildSchemaResponse(messageID, *criteria)
+		ldapResponse = proc.buildSubschemaResponse(messageID, *searchReq)
+	case strings.EqualFold(searchReq.BaseDN, cnSchema):
+		ldapResponse = proc.buildSchemaResponse(messageID, *searchReq)
 	default:
-		ldapResponse = proc.buildSearchEntryResponse(messageID, *criteria)
+		ldapResponse = proc.buildSearchEntryResponse(messageID, *searchReq)
 	}
 
 	if ldapResponse == nil {
@@ -80,17 +73,17 @@ func (proc *Processor) processSearchRequest(messageID uint64, request *ber.Packe
 	return ldap.LDAPResultSuccess
 }
 
-func (proc *Processor) buildSearchEntryResponse(messageID uint64, criteria searchCriteria) *ber.Packet {
 	log.Println(criteria)
+func (proc *Processor) buildSearchEntryResponse(messageID uint64, searchReq ldap.SearchRequest) *ber.Packet {
 	return nil
 }
 
-func (proc *Processor) buildSchemaResponse(messageID uint64, criteria searchCriteria) *ber.Packet {
 	log.Println(criteria)
 	return nil
+func (proc *Processor) buildSchemaResponse(messageID uint64, searchReq ldap.SearchRequest) *ber.Packet {
 }
 
-func (proc *Processor) buildSubschemaResponse(messageID uint64, criteria searchCriteria) *ber.Packet {
+func (proc *Processor) buildSubschemaResponse(messageID uint64, searchReq ldap.SearchRequest) *ber.Packet {
 	ldapResponse := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
 	ldapResponse.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagInteger, messageID, "MessageID"))
 	searchResponse := ber.Encode(ber.ClassApplication, ber.TypeConstructed, ldap.ApplicationSearchResultEntry, nil, "Search Result Entry")
