@@ -58,6 +58,12 @@ WITH (
 )`
 	sqlSelectMatchingRuleCount = `
 SELECT COUNT(oid) FROM matching_rules`
+	sqlSelectAllMatchingRules = `
+SELECT name
+	, oid
+	, syntax
+	, array_to_json(names)
+FROM matching_rules`
 	sqlInsertMatchingRuleRow = `
 INSERT INTO matching_rules
 (name, oid, syntax, names)
@@ -84,6 +90,18 @@ WITH (
 )`
 	sqlSelectAttributeTypeCount = `
 SELECT COUNT(oid) FROM attribute_types`
+	sqlSelectAllAttributeTypes = `
+SELECT name
+	, oid
+	, super
+	, syntax
+	, array_to_json(names)
+	, flags
+	, usage
+	, equality_match
+	, substring_match
+	, ordering_match
+FROM attribute_types`
 	sqlInsertAttributeTypeRow = `
 INSERT INTO attribute_types
 (name, oid, syntax, super, names, flags, usage,

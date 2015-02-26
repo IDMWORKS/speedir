@@ -98,6 +98,14 @@ func (proc *Processor) buildSchemaResponse(messageID uint64, searchReq ldap.Sear
 		proc.appendObjectClassAttributes(attributesPacket)
 	}
 
+	if i := sort.SearchStrings(atts, "matchingRules"); i < len(atts) {
+		proc.appendMatchingRuleAttributes(attributesPacket)
+	}
+
+	if i := sort.SearchStrings(atts, "attributesTypes"); i < len(atts) {
+		proc.appendAttributeTypeAttributes(attributesPacket)
+	}
+
 	searchResponse.AppendChild(attributesPacket)
 	ldapResponse.AppendChild(searchResponse)
 	return ldapResponse
@@ -108,6 +116,37 @@ func appendSchemaAttributes(attributesPacket *ber.Packet) {
 	attributesPacket.AppendChild(buildAttributePacket("objectClass", "top"))
 	attributesPacket.AppendChild(buildAttributePacket("objectClass", "ldapSubentry"))
 	attributesPacket.AppendChild(buildAttributePacket("objectClass", "subschema"))
+}
+
+func (proc *Processor) appendMatchingRuleAttributes(attributesPacket *ber.Packet) {
+	rules := proc.DC.SelectAllMatchingRules()
+	values := []string{}
+	for _, rule := range rules {
+		values = append(values, fmt.Sprintf(
+			"( %s NAME '%s' SYNTAX %s )",
+			rule.OID,
+			rule.Name,
+			rule.Syntax))
+	}
+	attributesPacket.AppendChild(buildAttributePacket("matchingRules", values...))
+}
+
+func (proc *Processor) appendAttributeTypeAttributes(attributesPacket *ber.Packet) {
+	rules := proc.DC.SelectAllAttributeTypes()
+	values := []string{}
+	for _, rule := range rules {
+		values = append(values, fmt.Sprintf(
+			"( %s NAME %s%s%s%s%s%s%s)",
+			rule.OID,
+			rule.NamesString(),
+			rule.SuperString(),
+			rule.EqualityMatchString(),
+			rule.SubstrMatchString(),
+			rule.OrderingMatchString(),
+			rule.SyntaxString(),
+			rule.FlagsString()))
+	}
+	attributesPacket.AppendChild(buildAttributePacket("attributeTypes", values...))
 }
 
 func (proc *Processor) appendSyntaxAttributes(attributesPacket *ber.Packet) {

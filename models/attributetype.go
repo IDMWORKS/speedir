@@ -1,6 +1,9 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+)
 
 type AttributeTypeFlag int
 type AttributeUsageFlag int
@@ -37,6 +40,88 @@ type AttributeType struct {
 	EqualityMatch sql.NullString
 	SubstrMatch   sql.NullString
 	OrderingMatch sql.NullString
+}
+
+func (attributeType *AttributeType) NamesString() string {
+	return getNamesString(attributeType.Name, attributeType.Names)
+}
+
+func (attributeType *AttributeType) FlagsString() string {
+	flags := attributeType.Flags
+	usage := attributeType.Usage
+	result := ""
+	if flags != ATNone {
+		if flags&ATSingleValue == ATSingleValue {
+			result += "SINGLE-VALUE "
+		}
+		if flags&ATNoUserMods == ATNoUserMods {
+			result += "NO-USER-MODIFICATION "
+		}
+		if flags&ATObsolete == ATObsolete {
+			result += "OBSOLETE "
+		}
+		if flags&ATCollective == ATCollective {
+			result += "COLLECTIVE "
+		}
+	}
+	if usage != AUNone {
+		if usage&AUDSAOperation == AUDSAOperation {
+			result += "dSAOperation "
+		}
+		if usage&AUDirectoryOperation == AUDirectoryOperation {
+			result += "directoryOperation "
+		}
+		if usage&AUUserApplications == AUUserApplications {
+			result += "userApplications "
+		}
+		if usage&AUDistributedOperation == AUDistributedOperation {
+			result += "distributedOperation "
+		}
+	}
+	return result
+}
+
+func (attributeType *AttributeType) SuperString() string {
+	return getPrefixedString("SUP", attributeType.Super)
+}
+
+func (attributeType *AttributeType) SyntaxString() string {
+	return getPrefixedString("SYNTAX", attributeType.Syntax)
+}
+
+func (attributeType *AttributeType) EqualityMatchString() string {
+	return getPrefixedString("EQUALITY", attributeType.EqualityMatch)
+}
+
+func (attributeType *AttributeType) SubstrMatchString() string {
+	return getPrefixedString("SUBSTR", attributeType.SubstrMatch)
+}
+
+func (attributeType *AttributeType) OrderingMatchString() string {
+	return getPrefixedString("ORDERING", attributeType.OrderingMatch)
+}
+
+func getPrefixedString(prefix string, value sql.NullString) string {
+	if !value.Valid {
+		return ""
+	}
+	return fmt.Sprintf("%s %s ", prefix, value.String)
+}
+
+func getNamesString(name string, names []string) string {
+	if len(names) == 0 {
+		return fmt.Sprintf("'%s' ", name)
+	}
+	result := fmt.Sprintf("( '%s' ", name)
+	last := len(names) - 1
+	for i, v := range names {
+		result += fmt.Sprintf("'%s'", v)
+		if i != last {
+			result += " "
+		}
+	}
+	result += " ) "
+	return result
 }
 
 const (
