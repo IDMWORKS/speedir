@@ -91,12 +91,12 @@ func (proc *Processor) buildSchemaResponse(messageID uint64, criteria searchCrit
 }
 
 func (proc *Processor) buildSubschemaResponse(messageID uint64, criteria searchCriteria) *ber.Packet {
-	ldapResponse := proc.buildLdapResponse(messageID)
+	ldapResponse := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
+	ldapResponse.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagInteger, messageID, "MessageID"))
 	searchResponse := ber.Encode(ber.ClassApplication, ber.TypeConstructed, ldap.ApplicationSearchResultEntry, nil, "Search Result Entry")
 	searchResponse.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimative, ber.TagOctetString, "", "objectName	LDAPDN"))
 	attributesPacket := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "Attributes")
-	attributePacket := buildAttributePacket("subschemaSubentry", cnSchema)
-	attributesPacket.AppendChild(attributePacket)
+	attributesPacket.AppendChild(buildAttributePacket("subschemaSubentry", cnSchema))
 	searchResponse.AppendChild(attributesPacket)
 	ldapResponse.AppendChild(searchResponse)
 	return ldapResponse
@@ -119,7 +119,8 @@ func buildValuesPacket(values []string) *ber.Packet {
 }
 
 func (proc *Processor) buildSearchDoneResponse(messageID uint64, ldapResult int) *ber.Packet {
-	ldapResponse := proc.buildLdapResponse(messageID)
+	ldapResponse := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
+	ldapResponse.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagInteger, messageID, "MessageID"))
 	searchResponse := ber.Encode(ber.ClassApplication, ber.TypeConstructed, ldap.ApplicationSearchResultDone, nil, "Search Result Done")
 	searchResponse.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagEnumerated, uint64(ldapResult), "LDAP Result"))
 	searchResponse.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimative, ber.TagOctetString, "", "Matched DN"))
