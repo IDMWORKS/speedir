@@ -87,6 +87,16 @@ const (
 	GroupOfUniqueNamesClassID   = "2.5.6.17"
 	DCObjectClassID             = "1.3.6.1.4.1.1466.344"
 	UIDObjectClassID            = "1.3.6.1.1.3.1"
+	// https://tools.ietf.org/html/rfc4524
+	AccountClassID           = "0.9.2342.19200300.100.4.5"
+	DocumentClassID          = "0.9.2342.19200300.100.4.6"
+	RoomClassID              = "0.9.2342.19200300.100.4.7"
+	DocumentSeriesClassID    = "0.9.2342.19200300.100.4.9"
+	DomainClassID            = "0.9.2342.19200300.100.4.13"
+	DomainRelatedObjClassID  = "0.9.2342.19200300.100.4.17"
+	FriendlyCountryClassID   = "0.9.2342.19200300.100.4.18"
+	RFC822LocalPartClassID   = "0.9.2342.19200300.100.4.14"
+	SimpleSecurityObjClassID = "0.9.2342.19200300.100.4.19"
 
 	// names
 	// https://tools.ietf.org/html/rfc4512
@@ -109,6 +119,16 @@ const (
 	GroupOfUniqueNamesClass   = "groupOfUniqueNames"
 	DCObjectClass             = "dcObject"
 	UIDObjectClass            = "uidObject"
+	// https://tools.ietf.org/html/rfc4524
+	AccountClass           = "account"
+	DocumentClass          = "document"
+	DocumentSeriesClass    = "documentSeries"
+	DomainClass            = "domain"
+	DomainRelatedObjClass  = "domainRelatedObject"
+	FriendlyCountryClass   = "friendlyCountry"
+	RFC822LocalPartClass   = "rFC822LocalPart"
+	RoomClass              = "room"
+	SimpleSecurityObjClass = "simpleSecurityObject"
 )
 
 // LDAPv3AttributeTypes represents the standard Object Classes
@@ -393,6 +413,127 @@ var LDAPv3ObjectClasses = [...]ObjectClass{
 		OID:            UIDObjectClassID,
 		Name:           UIDObjectClass,
 		MustAttributes: StringSlice{UIDAttribute},
+		Flags:          OCAuxiliary,
+	},
+	// https://tools.ietf.org/html/rfc4524
+	ObjectClass{
+		OID:            AccountClassID,
+		Name:           AccountClass,
+		MustAttributes: StringSlice{UIDAttribute},
+		MayAttributes: StringSlice{
+			DescriptionAttribute,
+			SeeAlsoAttribute,
+			LocalityNameAttribute,
+			OrganizationNameAttribute,
+			OrganizationUnitNameAttribute,
+			HostAttribute,
+		},
+		Flags: OCStructural,
+	},
+	ObjectClass{
+		OID:            DocumentClassID,
+		Name:           DocumentClass,
+		MustAttributes: StringSlice{DocumentIdentifierAttribute},
+		MayAttributes: StringSlice{
+			CommonNameAttribute,
+			DescriptionAttribute,
+			SeeAlsoAttribute,
+			LocalityNameAttribute,
+			OrganizationNameAttribute,
+			OrganizationUnitNameAttribute,
+			DocumentTitleAttribute,
+			DocumentVersionAttribute,
+			DocumentAuthorAttribute,
+			DocumentLocationAttribute,
+			DocumentPublisherAttribute,
+		},
+		Flags: OCStructural,
+	},
+	ObjectClass{
+		OID:            DomainClassID,
+		Name:           DomainClass,
+		MustAttributes: StringSlice{DomainComponentAttribute},
+		MayAttributes: StringSlice{
+			UserPasswordAttribute,
+			SearchGuideAttribute,
+			SeeAlsoAttribute,
+			BusinessCategoryAttribute,
+			X121AddressAttribute,
+			RegisteredAddressAttribute,
+			DestinationIndicatorAttribute,
+			PreferredDeliveryMethodAttribute,
+			TelexNumberAttribute,
+			TeletexTerminalIdentAttribute,
+			TelephoneNumberAttribute,
+			InternationalISDNNumberAttribute,
+			FacsimileTelephoneNumberAttribute,
+			StreetAddressAttribute,
+			PostOfficeBoxAttribute,
+			PostalCodeAttribute,
+			PostalAddressAttribute,
+			PhysicalDeliveryOfficeNameAttribute,
+			StateOrProvinceNameAttribute,
+			LocalityNameAttribute,
+			DescriptionAttribute,
+			OrganizationNameAttribute,
+			AssociatedNameAttribute,
+		},
+		Flags: OCStructural,
+	},
+	ObjectClass{
+		OID:            DomainRelatedObjClassID,
+		Name:           DomainRelatedObjClass,
+		MustAttributes: StringSlice{AssociatedDomainAttribute},
+		Flags:          OCAuxiliary,
+	},
+	ObjectClass{
+		OID:            FriendlyCountryClassID,
+		Name:           FriendlyCountryClass,
+		MustAttributes: StringSlice{FriendlyCountryAttribute},
+		Flags:          OCStructural,
+	},
+	ObjectClass{
+		OID:   RFC822LocalPartClassID,
+		Super: sql.NullString{String: DomainClass, Valid: true},
+		Name:  RFC822LocalPartClass,
+		MayAttributes: StringSlice{
+			CommonNameAttribute,
+			DescriptionAttribute,
+			DestinationIndicatorAttribute,
+			FacsimileTelephoneNumberAttribute,
+			InternationalISDNNumberAttribute,
+			PhysicalDeliveryOfficeNameAttribute,
+			PostalAddressAttribute,
+			PostalCodeAttribute,
+			PostOfficeBoxAttribute,
+			PreferredDeliveryMethodAttribute,
+			RegisteredAddressAttribute,
+			SeeAlsoAttribute,
+			SurnameAttribute,
+			StreetAddressAttribute,
+			TelephoneNumberAttribute,
+			TeletexTerminalIdentAttribute,
+			TelexNumberAttribute,
+			X121AddressAttribute,
+		},
+		Flags: OCStructural,
+	},
+	ObjectClass{
+		OID:            RoomClassID,
+		Name:           RoomClass,
+		MustAttributes: StringSlice{CommonNameAttribute},
+		MayAttributes: StringSlice{
+			RoomNumberAttribute,
+			DescriptionAttribute,
+			SeeAlsoAttribute,
+			TelephoneNumberAttribute,
+		},
+		Flags: OCStructural,
+	},
+	ObjectClass{
+		OID:            SimpleSecurityObjClassID,
+		Name:           SimpleSecurityObjClass,
+		MustAttributes: StringSlice{UserPasswordAttribute},
 		Flags:          OCAuxiliary,
 	},
 }

@@ -193,6 +193,32 @@ const (
 	HouseIdentifierAttributeID            = "2.5.4.51"
 	DomainComponentAttributeID            = "0.9.2342.19200300.100.1.25"
 	UIDAttributeID                        = "0.9.2342.19200300.100.1.1"
+	// https://tools.ietf.org/html/rfc4524
+	MailAttributeID               = "0.9.2342.19200300.100.1.3"
+	InfoAttributeID               = "0.9.2342.19200300.100.1.4"
+	DrinkAttributeID              = "0.9.2342.19200300.100.1.5"
+	RoomNumberAttributeID         = "0.9.2342.19200300.100.1.6"
+	UserClassAttributeID          = "0.9.2342.19200300.100.1.8"
+	HostAttributeID               = "0.9.2342.19200300.100.1.9"
+	ManagerAttributeID            = "0.9.2342.19200300.100.1.10"
+	DocumentIdentifierAttributeID = "0.9.2342.19200300.100.1.11"
+	DocumentTitleAttributeID      = "0.9.2342.19200300.100.1.12"
+	DocumentVersionAttributeID    = "0.9.2342.19200300.100.1.13"
+	DocumentAuthorAttributeID     = "0.9.2342.19200300.100.1.14"
+	DocumentLocationAttributeID   = "0.9.2342.19200300.100.1.15"
+	HomePhoneAttributeID          = "0.9.2342.19200300.100.1.20"
+	SecretaryAttributeID          = "0.9.2342.19200300.100.1.21"
+	AssociatedDomainAttributeID   = "0.9.2342.19200300.100.1.37"
+	AssociatedNameAttributeID     = "0.9.2342.19200300.100.1.38"
+	HomePostalAddressAttributeID  = "0.9.2342.19200300.100.1.39"
+	PersonalTitleAttributeID      = "0.9.2342.19200300.100.1.40"
+	MobileAttributeID             = "0.9.2342.19200300.100.1.41"
+	PagerAttributeID              = "0.9.2342.19200300.100.1.42"
+	FriendlyCountryAttributeID    = "0.9.2342.19200300.100.1.43"
+	UniqueIdentifierAttributeID   = "0.9.2342.19200300.100.1.44"
+	OrgStatusAttributeID          = "0.9.2342.19200300.100.1.45"
+	BuildingNameAttributeID       = "0.9.2342.19200300.100.1.48"
+	DocumentPublisherAttributeID  = "0.9.2342.19200300.100.1.56"
 
 	// names
 	// https://tools.ietf.org/html/rfc4512
@@ -262,6 +288,32 @@ const (
 	HouseIdentifierAttribute            = "houseIdentifier"
 	DomainComponentAttribute            = "dc"
 	UIDAttribute                        = "uid"
+	// https://tools.ietf.org/html/rfc4524
+	AssociatedDomainAttribute   = "associatedDomain"
+	AssociatedNameAttribute     = "associatedName"
+	BuildingNameAttribute       = "buildingName"
+	FriendlyCountryAttribute    = "co"
+	DocumentAuthorAttribute     = "documentAuthor"
+	DocumentIdentifierAttribute = "documentIdentifier"
+	DocumentLocationAttribute   = "documentLocation"
+	DocumentPublisherAttribute  = "documentPublisher"
+	DocumentTitleAttribute      = "documentTitle"
+	DocumentVersionAttribute    = "documentVersion"
+	DrinkAttribute              = "drink"
+	HomePhoneAttribute          = "homePhone"
+	HomePostalAddressAttribute  = "homePostalAddress"
+	HostAttribute               = "host"
+	InfoAttribute               = "info"
+	MailAttribute               = "mail"
+	ManagerAttribute            = "manager"
+	MobileAttribute             = "mobile"
+	OrgStatusAttribute          = "organizationalStatus"
+	PagerAttribute              = "pager"
+	PersonalTitleAttribute      = "personalTitle"
+	RoomNumberAttribute         = "roomNumber"
+	SecretaryAttribute          = "secretary"
+	UniqueIdentifierAttribute   = "uniqueIdentifier"
+	UserClassAttribute          = "userClass"
 )
 
 // LDAPv3AttributeTypes represents the standard Attribute Types
@@ -429,7 +481,6 @@ var LDAPv3AttributeTypes = [...]AttributeType{
 		Name:          BusinessCategoryAttribute,
 		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
 		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
-		Flags:         ATNone,
 	},
 	AttributeType{
 		OID:           NameAttributeID,
@@ -689,5 +740,178 @@ var LDAPv3AttributeTypes = [...]AttributeType{
 		Syntax:        sql.NullString{String: BitStringSyntaxID, Valid: true},
 		Name:          X500UniqueIdentifierAttribute,
 		EqualityMatch: sql.NullString{String: BitStringMatchRule, Valid: true},
+	},
+
+	// https://tools.ietf.org/html/rfc4524
+	AttributeType{
+		OID:           AssociatedDomainAttributeID,
+		Syntax:        sql.NullString{String: IA5StringSyntaxID, Valid: true},
+		Name:          AssociatedDomainAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreIA5MatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreIA5SubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           AssociatedNameAttributeID,
+		Syntax:        sql.NullString{String: DistinguishedNameSyntaxID, Valid: true},
+		Name:          AssociatedNameAttribute,
+		EqualityMatch: sql.NullString{String: DistinguishedNameMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           BuildingNameAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          BuildingNameAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           FriendlyCountryAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          FriendlyCountryAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           DocumentAuthorAttributeID,
+		Syntax:        sql.NullString{String: DistinguishedNameSyntaxID, Valid: true},
+		Name:          DocumentAuthorAttribute,
+		EqualityMatch: sql.NullString{String: DistinguishedNameMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           DocumentIdentifierAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          DocumentIdentifierAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           DocumentLocationAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          DocumentLocationAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           DocumentPublisherAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          DocumentPublisherAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           DocumentTitleAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          DocumentTitleAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           DocumentVersionAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          DocumentVersionAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           DrinkAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          DrinkAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           HomePhoneAttributeID,
+		Syntax:        sql.NullString{String: TelephoneNumberSyntaxID, Valid: true},
+		Name:          HomePhoneAttribute,
+		EqualityMatch: sql.NullString{String: TelephoneNumberMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: TelephoneNumberSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           HomePostalAddressAttributeID,
+		Syntax:        sql.NullString{String: PostalAddressSyntaxID, Valid: true},
+		Name:          HomePostalAddressAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreListMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreListSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           HostAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          HostAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           InfoAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          InfoAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           MailAttributeID,
+		Syntax:        sql.NullString{String: IA5StringSyntaxID, Valid: true},
+		Name:          MailAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreIA5MatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreIA5SubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           ManagerAttributeID,
+		Syntax:        sql.NullString{String: DistinguishedNameSyntaxID, Valid: true},
+		Name:          ManagerAttribute,
+		EqualityMatch: sql.NullString{String: DistinguishedNameMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           MobileAttributeID,
+		Syntax:        sql.NullString{String: TelephoneNumberSyntaxID, Valid: true},
+		Name:          MobileAttribute,
+		EqualityMatch: sql.NullString{String: TelephoneNumberMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: TelephoneNumberSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           OrgStatusAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          OrgStatusAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           PagerAttributeID,
+		Syntax:        sql.NullString{String: TelephoneNumberSyntaxID, Valid: true},
+		Name:          PagerAttribute,
+		EqualityMatch: sql.NullString{String: TelephoneNumberMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: TelephoneNumberSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           PersonalTitleAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          PersonalTitleAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           RoomNumberAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          RoomNumberAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           SecretaryAttributeID,
+		Syntax:        sql.NullString{String: DistinguishedNameSyntaxID, Valid: true},
+		Name:          SecretaryAttribute,
+		EqualityMatch: sql.NullString{String: DistinguishedNameMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           UniqueIdentifierAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          UniqueIdentifierAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
+	},
+	AttributeType{
+		OID:           UserClassAttributeID,
+		Syntax:        sql.NullString{String: DirectoryStringSyntaxID, Valid: true},
+		Name:          UserClassAttribute,
+		EqualityMatch: sql.NullString{String: CaseIgnoreMatchRule, Valid: true},
+		SubstrMatch:   sql.NullString{String: CaseIgnoreSubstrMatchRule, Valid: true},
 	},
 }
