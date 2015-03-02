@@ -85,6 +85,55 @@ func createDummySchemaIfNotExists(db *sql.DB) {
 				models.CommonNameAttribute:      []string{"example"},
 			},
 		})
+
+		parentDN := rootDN
+		commonName := "Users"
+		commonNameEntry := fmt.Sprintf("%s=%s", models.CommonNameAttribute, commonName)
+		entryDN := commonNameEntry + "," + parentDN
+
+		insertEntryRow(db, &models.Entry{
+			DN:      entryDN,
+			Parent:  sql.NullString{String: parentDN, Valid: true},
+			RDN:     commonNameEntry,
+			Classes: models.StringSlice{models.GroupOfNamesClass},
+			UserValues: models.AttributeValues{
+				models.CommonNameAttribute: []string{commonName},
+			},
+		})
+
+		groupDN := entryDN
+
+		parentDN = groupDN
+		commonName = "Test User"
+		commonNameEntry = fmt.Sprintf("%s=%s", models.CommonNameAttribute, commonName)
+		entryDN = commonNameEntry + "," + parentDN
+
+		insertEntryRow(db, &models.Entry{
+			DN:      entryDN,
+			Parent:  sql.NullString{String: parentDN, Valid: true},
+			RDN:     commonNameEntry,
+			Classes: models.StringSlice{models.PersonClass},
+			UserValues: models.AttributeValues{
+				models.CommonNameAttribute: []string{commonName},
+				models.SurnameAttribute:    []string{commonName},
+			},
+		})
+
+		parentDN = groupDN
+		commonName = "Test User2"
+		commonNameEntry = fmt.Sprintf("%s=%s", models.CommonNameAttribute, commonName)
+		entryDN = commonNameEntry + "," + parentDN
+
+		insertEntryRow(db, &models.Entry{
+			DN:      entryDN,
+			Parent:  sql.NullString{String: parentDN, Valid: true},
+			RDN:     commonNameEntry,
+			Classes: models.StringSlice{models.PersonClass},
+			UserValues: models.AttributeValues{
+				models.CommonNameAttribute: []string{commonName},
+				models.SurnameAttribute:    []string{commonName},
+			},
+		})
 	}
 }
 
