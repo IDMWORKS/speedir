@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/idmworks/speedir/datacontext"
+	"github.com/idmworks/speedir/models"
 	"github.com/mavricknz/asn1-ber"
 	"github.com/mavricknz/ldap"
 )
@@ -44,6 +46,8 @@ func (proc *Processor) processSearchRequest(messageID uint64, request *ber.Packe
 	searchReq.Filter, _ = ldap.DecompileFilter(request.Children[6])
 
 	subschema := false
+	namingContexts := false
+
 	for _, attr := range request.Children[7].Children {
 		attrName := attr.ValueString()
 		switch {
@@ -54,6 +58,9 @@ func (proc *Processor) processSearchRequest(messageID uint64, request *ber.Packe
 		case strings.EqualFold(attrName, models.SubschemaSubentryAttribute):
 			subschema = true
 			break
+		case strings.EqualFold(attrName, models.NamingContextsAttribute):
+			namingContexts = true
+			break
 		default:
 			searchReq.Attributes = append(searchReq.Attributes, attrName)
 		}
@@ -61,28 +68,81 @@ func (proc *Processor) processSearchRequest(messageID uint64, request *ber.Packe
 
 	sort.Strings(searchReq.Attributes)
 
-	var ldapResponse *ber.Packet
+	// TODO: derefFindingBaseObj vs derefInSearching
+
+	ldapResult = ldap.LDAPResultNoSuchObject
+
 	switch {
 	case subschema:
-		ldapResponse = proc.buildSubschemaResponse(messageID, *searchReq)
+		ldapResult = proc.sendSubschemaResponse(messageID, *searchReq)
+	case namingContexts:
+		ldapResult = proc.sendNamingContextsResponse(messageID, *searchReq)
 	case strings.EqualFold(searchReq.BaseDN, cnSchema):
-		ldapResponse = proc.buildSchemaResponse(messageID, *searchReq)
+		ldapResult = proc.sendSchemaResponse(messageID, *searchReq)
 	default:
-		ldapResponse = proc.buildSearchEntryResponse(messageID, *searchReq)
+		ldapResult = proc.sendSearchEntryResponse(messageID, *searchReq)
 	}
 
-	if ldapResponse == nil {
+	return ldapResult
+}
+
+func (proc *Processor) sendSearchEntryResponse(messageID uint64, searchReq ldap.SearchRequest) (ldapResult int) {
+	var entries datacontext.DBEntries
+	switch searchReq.Scope {
+	case ldap.ScopeBaseObject:
+		entries = proc.DC.SelectEntriesByDN(searchReq.BaseDN)
+	case ldap.ScopeSingleLevel:
+		entries = proc.DC.SelectEntriesByParent(searchReq.BaseDN)
+	case ldap.ScopeWholeSubtree:
+		entries = proc.DC.SelectEntryTreeByParent(searchReq.BaseDN)
+	}
+	if (searchReq.Scope == ldap.ScopeBaseObject) && (len(entries) == 0) {
 		return ldap.LDAPResultNoSuchObject
 	}
-	proc.sendLdapResponse(ldapResponse)
+
+	for _, entry := range entries {
+		proc.processSearchEntryResult(messageID, entry)
+	}
+
 	return ldap.LDAPResultSuccess
 }
 
-func (proc *Processor) buildSearchEntryResponse(messageID uint64, searchReq ldap.SearchRequest) *ber.Packet {
-	return nil
+func (proc *Processor) processSearchEntryResult(messageID uint64, entry *datacontext.DBEntry) {
+	ldapResponse := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
+	ldapResponse.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagInteger, messageID, "MessageID"))
+
+	searchResponse := ber.Encode(ber.ClassApplication, ber.TypeConstructed, ldap.ApplicationSearchResultEntry, nil, "Search Result Entry")
+	searchResponse.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimative, ber.TagOctetString, entry.DN, "objectName	LDAPDN"))
+
+	attributesPacket := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "Attributes")
+
+	// add attributes from entry.UserValues
+	// TODO: does not handle mult-value attributes - need to group
+	for key, value := range entry.UserValues {
+		attributesPacket.AppendChild(buildAttributePacket(key, value))
+	}
+
+	// add attributes from entry.OperValues - may not be necessary since we normalized subschema
+	// TODO: does not handle mult-value attributes
+	for key, value := range entry.OperValues {
+		attributesPacket.AppendChild(buildAttributePacket(key, value))
+	}
+
+	// we don't store "SUP top" in the DB - it's just a NULL SUP
+	values := []string{models.TopClass}
+	// add attributes from entry.Classes
+	for _, objectClass := range entry.Classes {
+		values = append(values, objectClass)
+	}
+	attributesPacket.AppendChild(buildAttributePacket(models.ObjectClassAttribute, values...))
+
+	searchResponse.AppendChild(attributesPacket)
+	ldapResponse.AppendChild(searchResponse)
+
+	proc.sendLdapResponse(ldapResponse)
 }
 
-func (proc *Processor) buildSchemaResponse(messageID uint64, searchReq ldap.SearchRequest) *ber.Packet {
+func (proc *Processor) sendSchemaResponse(messageID uint64, searchReq ldap.SearchRequest) (ldapResult int) {
 	ldapResponse := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
 	ldapResponse.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagInteger, messageID, "MessageID"))
 
@@ -113,7 +173,10 @@ func (proc *Processor) buildSchemaResponse(messageID uint64, searchReq ldap.Sear
 
 	searchResponse.AppendChild(attributesPacket)
 	ldapResponse.AppendChild(searchResponse)
-	return ldapResponse
+
+	proc.sendLdapResponse(ldapResponse)
+
+	return ldap.LDAPResultSuccess
 }
 
 func appendSchemaAttributes(attributesPacket *ber.Packet) {
@@ -183,16 +246,47 @@ func (proc *Processor) appendObjectClassAttributes(attributesPacket *ber.Packet)
 	attributesPacket.AppendChild(buildAttributePacket(models.ObjectClassesAttribute, values...))
 }
 
-func (proc *Processor) buildSubschemaResponse(messageID uint64, searchReq ldap.SearchRequest) *ber.Packet {
+func (proc *Processor) sendNamingContextsResponse(messageID uint64, searchReq ldap.SearchRequest) (ldapResult int) {
+	ldapResponse := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
+	ldapResponse.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagInteger, messageID, "MessageID"))
+
+	searchResponse := ber.Encode(ber.ClassApplication, ber.TypeConstructed, ldap.ApplicationSearchResultEntry, nil, "Search Result Entry")
+	searchResponse.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimative, ber.TagOctetString, "", "objectName	LDAPDN"))
+
+	attributesPacket := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "Attributes")
+
+	proc.appendNamingContextAttributes(attributesPacket)
+
+	searchResponse.AppendChild(attributesPacket)
+	ldapResponse.AppendChild(searchResponse)
+
+	proc.sendLdapResponse(ldapResponse)
+
+	return ldap.LDAPResultSuccess
+}
+
+func (proc *Processor) appendNamingContextAttributes(attributesPacket *ber.Packet) {
+	entries := proc.DC.SelectAllNamingContexts()
+	values := []string{}
+	for _, entry := range entries {
+		values = append(values, entry.DN)
+	}
+	attributesPacket.AppendChild(buildAttributePacket(models.NamingContextsAttribute, values...))
+}
+
+func (proc *Processor) sendSubschemaResponse(messageID uint64, searchReq ldap.SearchRequest) (ldapResult int) {
 	ldapResponse := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
 	ldapResponse.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimative, ber.TagInteger, messageID, "MessageID"))
 	searchResponse := ber.Encode(ber.ClassApplication, ber.TypeConstructed, ldap.ApplicationSearchResultEntry, nil, "Search Result Entry")
 	searchResponse.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimative, ber.TagOctetString, "", "objectName	LDAPDN"))
 	attributesPacket := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "Attributes")
-	attributesPacket.AppendChild(buildAttributePacket("subschemaSubentry", cnSchema))
+	attributesPacket.AppendChild(buildAttributePacket(models.SubschemaSubentryAttribute, cnSchema))
 	searchResponse.AppendChild(attributesPacket)
 	ldapResponse.AppendChild(searchResponse)
-	return ldapResponse
+
+	proc.sendLdapResponse(ldapResponse)
+
+	return ldap.LDAPResultSuccess
 }
 
 func buildAttributePacket(name string, values ...string) *ber.Packet {
