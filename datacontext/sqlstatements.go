@@ -141,4 +141,63 @@ INSERT INTO object_classes
 	must_attributes, may_attributes)
 VALUES
 ($1, $2, $3, $4, $5, $6, $7)`
+
+	// Entries table
+	sqlCreateEntriesTable = `
+CREATE TABLE IF NOT EXISTS entries
+(
+  dn text PRIMARY KEY,
+  parent text REFERENCES entries (dn),
+	rdn text NOT NULL,
+	classes text[],
+  user_values jsonb,
+	oper_values jsonb
+)
+WITH (
+	OIDS=FALSE
+)`
+	sqlSelectEntryCount = `
+SELECT COUNT(dn) FROM entries`
+	sqlSelectAllNamingContexts = `
+SELECT dn
+	, parent
+	, rdn
+	, array_to_json(classes)
+	, user_values
+	, oper_values
+FROM entries
+WHERE dn = rdn`
+	sqlSelectEntriesByDN = `
+SELECT dn
+	, parent
+	, rdn
+	, array_to_json(classes)
+	, user_values
+	, oper_values
+FROM entries
+WHERE dn = $1`
+	sqlSelectEntriesByParent = `
+SELECT dn
+	, parent
+	, rdn
+	, array_to_json(classes)
+	, user_values
+	, oper_values
+FROM entries
+WHERE parent = $1`
+	sqlSelectEntryTreeByParent = `
+SELECT dn
+	, parent
+	, rdn
+	, array_to_json(classes)
+	, user_values
+	, oper_values
+FROM entries
+WHERE dn LIKE $1`
+	sqlInsertEntryRow = `
+INSERT INTO entries
+(dn, parent, rdn, classes,
+	user_values, oper_values)
+VALUES
+($1, $2, $3, $4, $5, $6)`
 )

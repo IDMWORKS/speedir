@@ -48,6 +48,7 @@ func (dc *DataContext) SeedDb() {
 	createMatchingRulesIfNotExists(dc.DB)
 	createAttributeTypesIfNotExists(dc.DB)
 	createObjectClassesIfNotExists(dc.DB)
+	createDummySchemaIfNotExists(dc.DB)
 }
 
 func createTablesIfNotExists(db *sql.DB) {
@@ -57,10 +58,38 @@ func createTablesIfNotExists(db *sql.DB) {
 		sqlCreateMatchingRulesTable,
 		sqlCreateAttributeTypesTable,
 		sqlCreateObjectClassesTable,
+		sqlCreateEntriesTable,
 	}
 	for _, statement := range statements {
 		_, err := db.Exec(statement)
 		errors.CheckErr(err, "db.Exec failed")
+	}
+}
+
+func createDummySchemaIfNotExists(db *sql.DB) {
+	var count int
+	err := db.QueryRow(sqlSelectEntryCount).Scan(&count)
+	errors.CheckErr(err, "db.QueryRow failed")
+
+	if count == 0 {
+		entry := &models.Entry{
+			DN:      "dc=example,dc=org",
+			Parent:  sql.NullString{Valid: false},
+			RDN:     "dc=example,dc=org",
+			Classes: models.StringSlice{models.DomainClass},
+			UserValues: map[string]string{
+				"dc": "example",
+			},
+		}
+		_, err := db.Exec(
+			sqlInsertEntryRow,
+			entry.DN,
+			entry.Parent,
+			entry.RDN,
+			entry.Classes,
+			entry.UserValues,
+			entry.OperValues)
+		errors.CheckErr(err, "Insert failed")
 	}
 }
 
