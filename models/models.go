@@ -53,7 +53,7 @@ func (s *StringSlice) Scan(value interface{}) error {
 
 // AttributeValues defines a map of key-value pairs for storage in a PG DB
 // TODO: does not handle mult-value attributes
-type AttributeValues map[string]string
+type AttributeValues map[string][]string
 
 // Value converts a DB driver value (string) into a StringSlice
 func (s AttributeValues) Value() (driver.Value, error) {

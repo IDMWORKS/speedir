@@ -119,13 +119,13 @@ func (proc *Processor) processSearchEntryResult(messageID uint64, entry *datacon
 	// add attributes from entry.UserValues
 	// TODO: does not handle mult-value attributes - need to group
 	for key, value := range entry.UserValues {
-		attributesPacket.AppendChild(buildAttributePacket(key, value))
+		attributesPacket.AppendChild(buildAttributePacket(key, value...))
 	}
 
 	// add attributes from entry.OperValues - may not be necessary since we normalized subschema
 	// TODO: does not handle mult-value attributes
 	for key, value := range entry.OperValues {
-		attributesPacket.AppendChild(buildAttributePacket(key, value))
+		attributesPacket.AppendChild(buildAttributePacket(key, value...))
 	}
 
 	// we don't store "SUP top" in the DB - it's just a NULL SUP

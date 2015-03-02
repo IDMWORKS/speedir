@@ -7,6 +7,7 @@ import (
 	"database/sql"
 
 	// Imported for side-effects
+	"fmt"
 	_ "github.com/lib/pq"
 )
 
@@ -72,25 +73,31 @@ func createDummySchemaIfNotExists(db *sql.DB) {
 	errors.CheckErr(err, "db.QueryRow failed")
 
 	if count == 0 {
-		entry := &models.Entry{
-			DN:      "dc=example,dc=org",
+		rootDN := "dc=example,dc=org"
+
+		insertEntryRow(db, &models.Entry{
+			DN:      rootDN,
 			Parent:  sql.NullString{Valid: false},
-			RDN:     "dc=example,dc=org",
+			RDN:     rootDN,
 			Classes: models.StringSlice{models.DomainClass},
-			UserValues: map[string]string{
-				"dc": "example",
+			UserValues: models.AttributeValues{
+				models.DomainComponentAttribute: []string{"example"},
+				models.CommonNameAttribute:      []string{"example"},
 			},
-		}
-		_, err := db.Exec(
-			sqlInsertEntryRow,
-			entry.DN,
-			entry.Parent,
-			entry.RDN,
-			entry.Classes,
-			entry.UserValues,
-			entry.OperValues)
-		errors.CheckErr(err, "Insert failed")
+		})
 	}
+}
+
+func insertEntryRow(db *sql.DB, entry *models.Entry) {
+	_, err := db.Exec(
+		sqlInsertEntryRow,
+		entry.DN,
+		entry.Parent,
+		entry.RDN,
+		entry.Classes,
+		entry.UserValues,
+		entry.OperValues)
+	errors.CheckErr(err, "Insert failed")
 }
 
 func createAdminIfNotExists(db *sql.DB) {
