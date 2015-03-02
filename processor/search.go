@@ -23,6 +23,10 @@ func init() {
 
 func handleSearchRequest(proc *Processor, messageID uint64, request *ber.Packet) {
 	ldapResult := proc.processSearchRequest(messageID, request)
+	proc.sendSearchDoneResponse(messageID, ldapResult)
+}
+
+func (proc *Processor) sendSearchDoneResponse(messageID uint64, ldapResult int) {
 	ldapResponse := proc.buildSearchDoneResponse(messageID, ldapResult)
 	proc.sendLdapResponse(ldapResponse)
 }
@@ -42,14 +46,15 @@ func (proc *Processor) processSearchRequest(messageID uint64, request *ber.Packe
 	subschema := false
 	for _, attr := range request.Children[7].Children {
 		attrName := attr.ValueString()
-		if attrName == "1.1" {
+		switch {
+		case attrName == "1.1":
 			// http://www.alvestrand.no/objectid/1.1.html
 			searchReq.Attributes = nil
 			break
-		} else if strings.EqualFold(attrName, "subschemaSubentry") {
+		case strings.EqualFold(attrName, models.SubschemaSubentryAttribute):
 			subschema = true
 			break
-		} else {
+		default:
 			searchReq.Attributes = append(searchReq.Attributes, attrName)
 		}
 	}
@@ -90,15 +95,15 @@ func (proc *Processor) buildSchemaResponse(messageID uint64, searchReq ldap.Sear
 
 	atts := searchReq.Attributes
 
-	if i := sort.SearchStrings(atts, "ldapSyntaxes"); i < len(atts) {
+	if i := sort.SearchStrings(atts, models.LDAPSyntaxesAttribute); i < len(atts) {
 		proc.appendSyntaxAttributes(attributesPacket)
 	}
 
-	if i := sort.SearchStrings(atts, "objectClasses"); i < len(atts) {
+	if i := sort.SearchStrings(atts, models.ObjectClassesAttribute); i < len(atts) {
 		proc.appendObjectClassAttributes(attributesPacket)
 	}
 
-	if i := sort.SearchStrings(atts, "matchingRules"); i < len(atts) {
+	if i := sort.SearchStrings(atts, models.MatchingRulesAttribute); i < len(atts) {
 		proc.appendMatchingRuleAttributes(attributesPacket)
 	}
 
@@ -112,10 +117,10 @@ func (proc *Processor) buildSchemaResponse(messageID uint64, searchReq ldap.Sear
 }
 
 func appendSchemaAttributes(attributesPacket *ber.Packet) {
-	attributesPacket.AppendChild(buildAttributePacket("cn", "schema"))
-	attributesPacket.AppendChild(buildAttributePacket("objectClass", "top"))
-	attributesPacket.AppendChild(buildAttributePacket("objectClass", "ldapSubentry"))
-	attributesPacket.AppendChild(buildAttributePacket("objectClass", "subschema"))
+	attributesPacket.AppendChild(buildAttributePacket(models.CommonNameAttribute, "schema"))
+	attributesPacket.AppendChild(buildAttributePacket(models.ObjectClassAttribute, models.TopClass))
+	attributesPacket.AppendChild(buildAttributePacket(models.ObjectClassAttribute, "ldapSubentry"))
+	attributesPacket.AppendChild(buildAttributePacket(models.ObjectClassAttribute, models.SubschemaClass))
 }
 
 func (proc *Processor) appendMatchingRuleAttributes(attributesPacket *ber.Packet) {
@@ -128,7 +133,7 @@ func (proc *Processor) appendMatchingRuleAttributes(attributesPacket *ber.Packet
 			rule.Name,
 			rule.Syntax))
 	}
-	attributesPacket.AppendChild(buildAttributePacket("matchingRules", values...))
+	attributesPacket.AppendChild(buildAttributePacket(models.MatchingRulesAttribute, values...))
 }
 
 func (proc *Processor) appendAttributeTypeAttributes(attributesPacket *ber.Packet) {
@@ -146,7 +151,7 @@ func (proc *Processor) appendAttributeTypeAttributes(attributesPacket *ber.Packe
 			rule.SyntaxString(),
 			rule.FlagsString()))
 	}
-	attributesPacket.AppendChild(buildAttributePacket("attributeTypes", values...))
+	attributesPacket.AppendChild(buildAttributePacket(models.AttributeTypesAttribute, values...))
 }
 
 func (proc *Processor) appendSyntaxAttributes(attributesPacket *ber.Packet) {
@@ -158,7 +163,7 @@ func (proc *Processor) appendSyntaxAttributes(attributesPacket *ber.Packet) {
 			syntax.OID,
 			syntax.Description))
 	}
-	attributesPacket.AppendChild(buildAttributePacket("ldapSyntaxes", values...))
+	attributesPacket.AppendChild(buildAttributePacket(models.LDAPSyntaxesAttribute, values...))
 }
 
 func (proc *Processor) appendObjectClassAttributes(attributesPacket *ber.Packet) {
@@ -175,7 +180,7 @@ func (proc *Processor) appendObjectClassAttributes(attributesPacket *ber.Packet)
 			objectClass.MayString()),
 		)
 	}
-	attributesPacket.AppendChild(buildAttributePacket("objectClasses", values...))
+	attributesPacket.AppendChild(buildAttributePacket(models.ObjectClassesAttribute, values...))
 }
 
 func (proc *Processor) buildSubschemaResponse(messageID uint64, searchReq ldap.SearchRequest) *ber.Packet {
