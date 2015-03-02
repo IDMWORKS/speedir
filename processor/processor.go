@@ -7,6 +7,7 @@ import (
 
 	"github.com/idmworks/speedir/datacontext"
 	"github.com/mavricknz/asn1-ber"
+	"github.com/mavricknz/ldap"
 )
 
 type Processor struct {
@@ -68,7 +69,7 @@ func (proc *Processor) parsePacket(packet *ber.Packet) {
 			}
 		}
 		if !handled {
-			log.Println("LDAPv3 app code not implemented:", request.Tag)
+			log.Println("LDAPv3 app code not implemented:", ldap.ApplicationMap[request.Tag])
 		}
 	}
 }
