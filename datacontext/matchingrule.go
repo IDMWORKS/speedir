@@ -2,8 +2,8 @@ package datacontext
 
 import (
 	"database/sql"
+	"fmt"
 
-	"github.com/idmworks/speedir/errors"
 	"github.com/idmworks/speedir/models"
 )
 
@@ -16,32 +16,34 @@ type DBMatchingRule struct {
 type DBMatchingRulees []*DBMatchingRule
 
 // Scan scans each row from rows appending the populated matchingRule to matchingRules
-func (matchingRules *DBMatchingRulees) scan(rows *sql.Rows) {
+func (matchingRules *DBMatchingRulees) scan(rows *sql.Rows) error {
 	for rows.Next() {
 		matchingRule := &DBMatchingRule{&models.MatchingRule{}}
 		matchingRule.scan(rows)
 		*matchingRules = append(*matchingRules, matchingRule)
 	}
-	errors.CheckErr(rows.Err(), "rows.Next failed")
+	return rows.Err()
 }
 
 // Scan scans the current row in rows to populate matchingRule
-func (matchingRule *DBMatchingRule) scan(rows *sql.Rows) {
+func (matchingRule *DBMatchingRule) scan(rows *sql.Rows) error {
 	err := rows.Scan(
 		&matchingRule.Name,
 		&matchingRule.OID,
 		&matchingRule.Syntax,
 		&matchingRule.Names)
-	errors.CheckErr(err, "rows.Scan failed")
+	return err
 }
 
 // SelectAllMatchingRulees returns a slice of DBMatchingRule for all matchingRules
-func (dc *DataContext) SelectAllMatchingRules() DBMatchingRulees {
+func (dc *DataContext) SelectAllMatchingRules() (result DBMatchingRulees, err error) {
 	matchingRules := make(DBMatchingRulees, 0)
 
 	rows, err := dc.DB.Query(sqlSelectAllMatchingRules)
-	errors.CheckErr(err, "Select failed")
-	matchingRules.scan(rows)
+	if err != nil {
+		return nil, fmt.Errorf("SelectAllMatchingRules failed: %v", err)
+	}
 
-	return matchingRules
+	matchingRules.scan(rows)
+	return matchingRules, nil
 }

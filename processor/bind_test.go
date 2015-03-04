@@ -68,7 +68,7 @@ func BenchmarkGetBindResponse(b *testing.B) {
 
 func testGetBindResponse(tb testing.TB, messageID uint64, creds credentials) {
 	request := buildBindRequest(creds.username, creds.password)
-	response, _ := proc.getBindResponse(messageID, request)
+	response, _, _ := proc.getBindResponse(messageID, request)
 	actual, found := parseLDAPResult(response)
 	if !found {
 		tb.Error("BindResponse malformed for", creds)

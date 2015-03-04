@@ -15,32 +15,42 @@ func init() {
 		})
 }
 
-func handleBindRequest(proc *Processor, messageID uint64, request *ber.Packet) {
-	response, result := proc.getBindResponse(messageID, request)
+func handleBindRequest(proc *Processor, messageID uint64, request *ber.Packet) error {
+	response, result, err := proc.getBindResponse(messageID, request)
+	if err != nil {
+		return err
+	}
 
 	if result != ldap.LDAPResultSuccess {
 		defer proc.conn.Close()
 	}
-
 	proc.sendLdapResponse(response)
+
+	return nil
 }
 
-func (proc *Processor) getBindResponse(messageID uint64, request *ber.Packet) (response *ber.Packet, result int) {
+func (proc *Processor) getBindResponse(messageID uint64, request *ber.Packet) (response *ber.Packet, result int, err error) {
 	username := request.Children[1].ValueString()
 	auth := request.Children[2]
 	password := auth.Data.String()
-
-	users := proc.DC.SelectUsersByUsername(username)
-
 	result = ldap.LDAPResultProtocolError
+
+	users, err := proc.DC.SelectUsersByUsername(username)
+	if err != nil {
+		return nil, result, err
+	}
 
 	if len(users) == 1 {
 		log.Println("User found:", username)
 
-		if users[0].ComparePassword(password) {
+		match, err := users[0].ComparePassword(password)
+		switch {
+		case err != nil:
+			return nil, result, err
+		case match:
 			log.Println("Password for user valid:", username)
 			result = ldap.LDAPResultSuccess
-		} else {
+		default:
 			log.Println("Password for user invalid:", username)
 			result = ldap.LDAPResultInvalidCredentials
 		}

@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"strconv"
-
-	errs "github.com/idmworks/speedir/errors"
 )
 
 // StringSlice defines a slice of string for storage in a PG DB
@@ -62,7 +60,9 @@ func (s AttributeValues) Value() (driver.Value, error) {
 	}
 
 	bytes, err := json.Marshal(s)
-	errs.CheckErr(err, "json.Marshal failed")
+	if err != nil {
+		return nil, err
+	}
 
 	return string(bytes), nil
 }

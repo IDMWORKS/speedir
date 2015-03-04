@@ -2,13 +2,17 @@ package processor
 
 import (
 	"bufio"
+	"errors"
 	"log"
 	"net"
 
 	"github.com/idmworks/speedir/datacontext"
 	"github.com/mavricknz/asn1-ber"
 	"github.com/mavricknz/ldap"
+	"io"
 )
+
+var ErrDecodingASN1 = errors.New("Error decoding asn1-ber packet: wrong port?")
 
 type Processor struct {
 	// DC provides access to the data layer
@@ -18,7 +22,7 @@ type Processor struct {
 	conn    net.Conn
 }
 
-type requestHandler func(proc *Processor, messageID uint64, request *ber.Packet)
+type requestHandler func(proc *Processor, messageID uint64, request *ber.Packet) error
 
 type requestProcessor struct {
 	ldapCode uint8
@@ -28,34 +32,40 @@ type requestProcessor struct {
 var requestProcessors = make([]requestProcessor, 0)
 
 // HandleRequest handles incoming LDAPv3 requests
-func (proc *Processor) HandleRequest(conn net.Conn) {
+func (proc *Processor) HandleRequest(conn net.Conn, errChan chan error) {
 	proc.conn = conn
 	// continuously read from the connection
 	for {
 		packet, err := ber.ReadPacket(bufio.NewReader(conn))
 
+		if err == io.EOF {
+			// connection closed by client
+			conn.Close()
+			return
+		}
+
+		if err != nil {
+			errChan <- err
+			continue
+		}
+
 		if proc.Verbose && (packet != nil) {
 			ber.PrintPacket(packet)
 		}
 
-		if err != nil {
-			defer conn.Close()
-			log.Println("Error reading:", err.Error())
-			return
-		}
-
 		// required to catch issues like TLS/TCP port mis-matches
 		if len(packet.Children) == 0 {
-			defer conn.Close()
-			log.Println("Error decoding asn1-ber packet: wrong port?")
-			return
+			errChan <- ErrDecodingASN1
+			continue
 		}
 
-		proc.parsePacket(packet)
+		if err := proc.parsePacket(packet); err != nil {
+			errChan <- err
+		}
 	}
 }
 
-func (proc *Processor) parsePacket(packet *ber.Packet) {
+func (proc *Processor) parsePacket(packet *ber.Packet) error {
 	messageID := packet.Children[0].Value.(uint64)
 	request := packet.Children[1]
 
@@ -64,7 +74,9 @@ func (proc *Processor) parsePacket(packet *ber.Packet) {
 		var handled bool
 		for _, reqProc := range requestProcessors {
 			if reqProc.ldapCode == request.Tag {
-				reqProc.handler(proc, messageID, request)
+				if err := reqProc.handler(proc, messageID, request); err != nil {
+					return err
+				}
 				handled = true
 			}
 		}
@@ -72,6 +84,8 @@ func (proc *Processor) parsePacket(packet *ber.Packet) {
 			log.Println("LDAPv3 app code not implemented:", ldap.ApplicationMap[request.Tag])
 		}
 	}
+
+	return nil
 }
 
 func (proc *Processor) sendLdapResponse(packet *ber.Packet) {

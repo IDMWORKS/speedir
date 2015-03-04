@@ -2,8 +2,8 @@ package datacontext
 
 import (
 	"database/sql"
+	"fmt"
 
-	"github.com/idmworks/speedir/errors"
 	"github.com/idmworks/speedir/models"
 )
 
@@ -16,30 +16,32 @@ type DBSyntax struct {
 type DBSyntaxes []*DBSyntax
 
 // Scan scans each row from rows appending the populated syntax to syntaxes
-func (syntaxes *DBSyntaxes) scan(rows *sql.Rows) {
+func (syntaxes *DBSyntaxes) scan(rows *sql.Rows) error {
 	for rows.Next() {
 		syntax := &DBSyntax{&models.Syntax{}}
 		syntax.scan(rows)
 		*syntaxes = append(*syntaxes, syntax)
 	}
-	errors.CheckErr(rows.Err(), "rows.Next failed")
+	return rows.Err()
 }
 
 // Scan scans the current row in rows to populate syntax
-func (syntax *DBSyntax) scan(rows *sql.Rows) {
+func (syntax *DBSyntax) scan(rows *sql.Rows) error {
 	err := rows.Scan(
 		&syntax.OID,
 		&syntax.Description)
-	errors.CheckErr(err, "rows.Scan failed")
+	return err
 }
 
 // SelectAllSyntaxes returns a slice of DBSyntax for all syntaxes
-func (dc *DataContext) SelectAllSyntaxes() DBSyntaxes {
+func (dc *DataContext) SelectAllSyntaxes() (result DBSyntaxes, err error) {
 	syntaxes := make(DBSyntaxes, 0)
 
 	rows, err := dc.DB.Query(sqlSelectAllSyntaxes)
-	errors.CheckErr(err, "Select failed")
-	syntaxes.scan(rows)
+	if err != nil {
+		return nil, fmt.Errorf("SelectAllSyntaxes failed: %v", err)
+	}
 
-	return syntaxes
+	syntaxes.scan(rows)
+	return syntaxes, nil
 }

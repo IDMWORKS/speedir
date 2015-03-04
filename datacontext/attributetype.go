@@ -2,8 +2,8 @@ package datacontext
 
 import (
 	"database/sql"
+	"fmt"
 
-	"github.com/idmworks/speedir/errors"
 	"github.com/idmworks/speedir/models"
 )
 
@@ -16,17 +16,17 @@ type DBAttributeType struct {
 type DBAttributeTypees []*DBAttributeType
 
 // Scan scans each row from rows appending the populated attributeType to attributeTypes
-func (attributeTypes *DBAttributeTypees) scan(rows *sql.Rows) {
+func (attributeTypes *DBAttributeTypees) scan(rows *sql.Rows) error {
 	for rows.Next() {
 		attributeType := &DBAttributeType{&models.AttributeType{}}
 		attributeType.scan(rows)
 		*attributeTypes = append(*attributeTypes, attributeType)
 	}
-	errors.CheckErr(rows.Err(), "rows.Next failed")
+	return rows.Err()
 }
 
 // Scan scans the current row in rows to populate attributeType
-func (attributeType *DBAttributeType) scan(rows *sql.Rows) {
+func (attributeType *DBAttributeType) scan(rows *sql.Rows) error {
 	err := rows.Scan(
 		&attributeType.Name,
 		&attributeType.OID,
@@ -38,16 +38,18 @@ func (attributeType *DBAttributeType) scan(rows *sql.Rows) {
 		&attributeType.EqualityMatch,
 		&attributeType.SubstrMatch,
 		&attributeType.OrderingMatch)
-	errors.CheckErr(err, "rows.Scan failed")
+	return err
 }
 
 // SelectAllAttributeTypees returns a slice of DBAttributeType for all attributeTypes
-func (dc *DataContext) SelectAllAttributeTypes() DBAttributeTypees {
+func (dc *DataContext) SelectAllAttributeTypes() (result DBAttributeTypees, err error) {
 	attributeTypes := make(DBAttributeTypees, 0)
 
 	rows, err := dc.DB.Query(sqlSelectAllAttributeTypes)
-	errors.CheckErr(err, "Select failed")
-	attributeTypes.scan(rows)
+	if err != nil {
+		return nil, fmt.Errorf("SelectAllAttributeTypes failed: %v", err)
+	}
 
-	return attributeTypes
+	attributeTypes.scan(rows)
+	return attributeTypes, nil
 }

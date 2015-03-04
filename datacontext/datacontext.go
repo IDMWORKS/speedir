@@ -1,14 +1,12 @@
 package datacontext
 
 import (
-	"github.com/idmworks/speedir/errors"
-	"github.com/idmworks/speedir/models"
-
 	"database/sql"
-
-	// Imported for side-effects
 	"fmt"
+	// Imported for side-effects
 	_ "github.com/lib/pq"
+
+	"github.com/idmworks/speedir/models"
 )
 
 const (
@@ -23,17 +21,19 @@ type DataContext struct {
 }
 
 // InitDb opens the DB & updates the schema as needed
-func (dc *DataContext) InitDb() {
-	dc.OpenDb()
+func (dc *DataContext) InitDb() error {
+	if err := dc.OpenDb(); err != nil {
+		return err
+	}
 
-	createTablesIfNotExists(dc.DB)
+	return createTablesIfNotExists(dc.DB)
 }
 
 // OpenDb opens the database
-func (dc *DataContext) OpenDb() {
+func (dc *DataContext) OpenDb() error {
 	db, err := sql.Open("postgres", "user="+dc.DBUser+" dbname="+dc.DBName+" sslmode=disable")
-	errors.CheckErr(err, "sql.Open failed")
 	dc.DB = db
+	return err
 }
 
 // OpenDb opens the database
@@ -43,16 +43,29 @@ func (dc *DataContext) CloseDb() {
 }
 
 // SeedDb seeds the DB with data necessary for the app to run
-func (dc *DataContext) SeedDb() {
-	createAdminIfNotExists(dc.DB)
-	createSyntaxesIfNotExists(dc.DB)
-	createMatchingRulesIfNotExists(dc.DB)
-	createAttributeTypesIfNotExists(dc.DB)
-	createObjectClassesIfNotExists(dc.DB)
-	createDummySchemaIfNotExists(dc.DB)
+func (dc *DataContext) SeedDb() error {
+	if err := createAdminIfNotExists(dc.DB); err != nil {
+		return err
+	}
+	if err := createSyntaxesIfNotExists(dc.DB); err != nil {
+		return err
+	}
+	if err := createMatchingRulesIfNotExists(dc.DB); err != nil {
+		return err
+	}
+	if err := createAttributeTypesIfNotExists(dc.DB); err != nil {
+		return err
+	}
+	if err := createObjectClassesIfNotExists(dc.DB); err != nil {
+		return err
+	}
+	if err := createDummySchemaIfNotExists(dc.DB); err != nil {
+		return err
+	}
+	return nil
 }
 
-func createTablesIfNotExists(db *sql.DB) {
+func createTablesIfNotExists(db *sql.DB) error {
 	statements := []string{
 		sqlCreateUsersTable,
 		sqlCreateSyntaxesTable,
@@ -62,36 +75,40 @@ func createTablesIfNotExists(db *sql.DB) {
 		sqlCreateEntriesTable,
 	}
 	for _, statement := range statements {
-		_, err := db.Exec(statement)
-		errors.CheckErr(err, "db.Exec failed")
+		if _, err := db.Exec(statement); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func createDummySchemaIfNotExists(db *sql.DB) {
+func createDummySchemaIfNotExists(db *sql.DB) error {
 	var count int
-	err := db.QueryRow(sqlSelectEntryCount).Scan(&count)
-	errors.CheckErr(err, "db.QueryRow failed")
+	if err := db.QueryRow(sqlSelectEntryCount).Scan(&count); err != nil {
+		return err
+	}
 
 	if count == 0 {
 		rootDN := "dc=example,dc=org"
 
-		insertEntryRow(db, &models.Entry{
+		if err := insertEntryRow(db, &models.Entry{
 			DN:      rootDN,
 			Parent:  sql.NullString{Valid: false},
 			RDN:     rootDN,
 			Classes: models.StringSlice{models.DomainClass},
 			UserValues: models.AttributeValues{
 				models.DomainComponentAttribute: []string{"example"},
-				models.CommonNameAttribute:      []string{"example"},
 			},
-		})
+		}); err != nil {
+			return err
+		}
 
 		parentDN := rootDN
 		commonName := "Users"
 		commonNameEntry := fmt.Sprintf("%s=%s", models.CommonNameAttribute, commonName)
 		entryDN := commonNameEntry + "," + parentDN
 
-		insertEntryRow(db, &models.Entry{
+		if err := insertEntryRow(db, &models.Entry{
 			DN:      entryDN,
 			Parent:  sql.NullString{String: parentDN, Valid: true},
 			RDN:     commonNameEntry,
@@ -99,7 +116,9 @@ func createDummySchemaIfNotExists(db *sql.DB) {
 			UserValues: models.AttributeValues{
 				models.CommonNameAttribute: []string{commonName},
 			},
-		})
+		}); err != nil {
+			return err
+		}
 
 		groupDN := entryDN
 
@@ -108,7 +127,7 @@ func createDummySchemaIfNotExists(db *sql.DB) {
 		commonNameEntry = fmt.Sprintf("%s=%s", models.CommonNameAttribute, commonName)
 		entryDN = commonNameEntry + "," + parentDN
 
-		insertEntryRow(db, &models.Entry{
+		if err := insertEntryRow(db, &models.Entry{
 			DN:      entryDN,
 			Parent:  sql.NullString{String: parentDN, Valid: true},
 			RDN:     commonNameEntry,
@@ -117,14 +136,16 @@ func createDummySchemaIfNotExists(db *sql.DB) {
 				models.CommonNameAttribute: []string{commonName},
 				models.SurnameAttribute:    []string{commonName},
 			},
-		})
+		}); err != nil {
+			return err
+		}
 
 		parentDN = groupDN
 		commonName = "Test User2"
 		commonNameEntry = fmt.Sprintf("%s=%s", models.CommonNameAttribute, commonName)
 		entryDN = commonNameEntry + "," + parentDN
 
-		insertEntryRow(db, &models.Entry{
+		if err := insertEntryRow(db, &models.Entry{
 			DN:      entryDN,
 			Parent:  sql.NullString{String: parentDN, Valid: true},
 			RDN:     commonNameEntry,
@@ -133,11 +154,15 @@ func createDummySchemaIfNotExists(db *sql.DB) {
 				models.CommonNameAttribute: []string{commonName},
 				models.SurnameAttribute:    []string{commonName},
 			},
-		})
+		}); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func insertEntryRow(db *sql.DB, entry *models.Entry) {
+func insertEntryRow(db *sql.DB, entry *models.Entry) error {
 	_, err := db.Exec(
 		sqlInsertEntryRow,
 		entry.DN,
@@ -146,76 +171,96 @@ func insertEntryRow(db *sql.DB, entry *models.Entry) {
 		entry.Classes,
 		entry.UserValues,
 		entry.OperValues)
-	errors.CheckErr(err, "Insert failed")
+	return err
 }
 
-func createAdminIfNotExists(db *sql.DB) {
+func createAdminIfNotExists(db *sql.DB) error {
 	var count int
-	err := db.QueryRow(sqlSelectUserCountByUsername, adminUsername).Scan(&count)
-	errors.CheckErr(err, "db.QueryRow failed")
+	if err := db.QueryRow(sqlSelectUserCountByUsername, adminUsername).Scan(&count); err != nil {
+		return err
+	}
 
 	if count == 0 {
 		admin := models.CreateUser(adminUsername, adminPassword)
-		_, err := db.Exec(sqlInsertUserRow,
-			admin.Created, admin.Username, admin.PasswordHash, admin.PasswordSalt)
-		errors.CheckErr(err, "Insert failed")
+		if _, err := db.Exec(sqlInsertUserRow,
+			admin.Created, admin.Username, admin.PasswordHash, admin.PasswordSalt); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func createSyntaxesIfNotExists(db *sql.DB) {
+func createSyntaxesIfNotExists(db *sql.DB) error {
 	var count int
-	err := db.QueryRow(sqlSelectSyntaxCount).Scan(&count)
-	errors.CheckErr(err, "db.QueryRow failed")
+	if err := db.QueryRow(sqlSelectSyntaxCount).Scan(&count); err != nil {
+		return err
+	}
 
 	if count == 0 {
 		for _, syntax := range models.LDAPv3Syntaxes {
-			_, err := db.Exec(sqlInsertSyntaxRow,
-				syntax.OID, syntax.Description)
-			errors.CheckErr(err, "Insert failed")
+			if _, err := db.Exec(sqlInsertSyntaxRow,
+				syntax.OID, syntax.Description); err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
-func createMatchingRulesIfNotExists(db *sql.DB) {
+func createMatchingRulesIfNotExists(db *sql.DB) error {
 	var count int
-	err := db.QueryRow(sqlSelectMatchingRuleCount).Scan(&count)
-	errors.CheckErr(err, "db.QueryRow failed")
+	if err := db.QueryRow(sqlSelectMatchingRuleCount).Scan(&count); err != nil {
+		return err
+	}
 
 	if count == 0 {
 		for _, rule := range models.LDAPv3MatchingRules {
-			_, err := db.Exec(sqlInsertMatchingRuleRow,
-				rule.Name, rule.OID, rule.Syntax, rule.Names)
-			errors.CheckErr(err, "Insert failed")
+			if _, err := db.Exec(sqlInsertMatchingRuleRow,
+				rule.Name, rule.OID, rule.Syntax, rule.Names); err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
-func createAttributeTypesIfNotExists(db *sql.DB) {
+func createAttributeTypesIfNotExists(db *sql.DB) error {
 	var count int
-	err := db.QueryRow(sqlSelectAttributeTypeCount).Scan(&count)
-	errors.CheckErr(err, "db.QueryRow failed")
+	if err := db.QueryRow(sqlSelectAttributeTypeCount).Scan(&count); err != nil {
+		return err
+	}
 
 	if count == 0 {
 		for _, attr := range models.LDAPv3AttributeTypes {
-			_, err := db.Exec(sqlInsertAttributeTypeRow,
+			if _, err := db.Exec(sqlInsertAttributeTypeRow,
 				attr.Name, attr.OID, attr.Syntax, attr.Super, attr.Names, attr.Flags,
-				attr.Usage, attr.EqualityMatch, attr.SubstrMatch, attr.OrderingMatch)
-			errors.CheckErr(err, "Insert failed")
+				attr.Usage, attr.EqualityMatch, attr.SubstrMatch, attr.OrderingMatch); err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
-func createObjectClassesIfNotExists(db *sql.DB) {
+func createObjectClassesIfNotExists(db *sql.DB) error {
 	var count int
-	err := db.QueryRow(sqlSelectObjectClassCount).Scan(&count)
-	errors.CheckErr(err, "db.QueryRow failed")
+	if err := db.QueryRow(sqlSelectObjectClassCount).Scan(&count); err != nil {
+		return err
+	}
 
 	if count == 0 {
 		for _, class := range models.LDAPv3ObjectClasses {
-			_, err := db.Exec(sqlInsertObjectClassRow,
+			if _, err := db.Exec(sqlInsertObjectClassRow,
 				class.Name, class.OID, class.Super, class.Names, class.Flags,
-				class.MustAttributes, class.MayAttributes)
-			errors.CheckErr(err, "Insert failed")
+				class.MustAttributes, class.MayAttributes); err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }

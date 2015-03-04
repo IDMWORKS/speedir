@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 
 	"github.com/idmworks/speedir/datacontext"
 	"github.com/idmworks/speedir/processor"
@@ -21,10 +22,15 @@ var (
 
 func main() {
 	parseFlags()
-	dc := setupDb()
+	dc, err := setupDb()
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer dc.CloseDb()
 	proc := setupProcessor(dc)
-	startServers(proc)
+	if err = startServers(proc); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func parseFlags() {
@@ -36,11 +42,13 @@ func parseFlags() {
 	verbose = *verbosePtr
 }
 
-func setupDb() *datacontext.DataContext {
-	dc := &datacontext.DataContext{DBName: dbname, DBUser: dbuser}
-	dc.InitDb()
+func setupDb() (dc *datacontext.DataContext, err error) {
+	dc = &datacontext.DataContext{DBName: dbname, DBUser: dbuser}
+	if err := dc.InitDb(); err != nil {
+		return nil, err
+	}
 	dc.SeedDb()
-	return dc
+	return dc, nil
 }
 
 func setupProcessor(dc *datacontext.DataContext) *processor.Processor {
@@ -48,11 +56,36 @@ func setupProcessor(dc *datacontext.DataContext) *processor.Processor {
 	return proc
 }
 
-func startServers(proc *processor.Processor) {
-	// start first TCP server in a goroutine
-	tcpServer := &server.Server{Port: listenTCPPort, Secure: false, Handler: proc.HandleRequest}
+func startServers(proc *processor.Processor) error {
+	errChan := make(chan error)
+
+	// start first TCP (TLS) server in a goroutine
+	tlsServer := &server.Server{
+		Port:    listenTLSPort,
+		Secure:  true,
+		Handler: proc.HandleRequest,
+		ErrChan: errChan,
+	}
+	go tlsServer.ServeTCP()
+
+	// start second TCP server in a goroutine
+	tcpServer := &server.Server{
+		Port:    listenTCPPort,
+		Secure:  false,
+		Handler: proc.HandleRequest,
+		ErrChan: errChan,
+	}
 	go tcpServer.ServeTCP()
-	// start second TCP (TLS) server in the main thread
-	tlsServer := &server.Server{Port: listenTLSPort, Secure: true, Handler: proc.HandleRequest}
-	tlsServer.ServeTCP()
+
+	// block waiting for either server to error
+	for {
+		select {
+		case err := <-errChan:
+			if err == processor.ErrDecodingASN1 {
+				log.Println(err)
+			} else {
+				return err
+			}
+		}
+	}
 }

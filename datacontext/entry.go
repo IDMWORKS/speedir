@@ -2,8 +2,8 @@ package datacontext
 
 import (
 	"database/sql"
+	"fmt"
 
-	"github.com/idmworks/speedir/errors"
 	"github.com/idmworks/speedir/models"
 )
 
@@ -16,17 +16,17 @@ type DBEntry struct {
 type DBEntries []*DBEntry
 
 // Scan scans each row from rows appending the populated entry to entries
-func (entries *DBEntries) scan(rows *sql.Rows) {
+func (entries *DBEntries) scan(rows *sql.Rows) error {
 	for rows.Next() {
 		entry := &DBEntry{&models.Entry{}}
 		entry.scan(rows)
 		*entries = append(*entries, entry)
 	}
-	errors.CheckErr(rows.Err(), "rows.Next failed")
+	return rows.Err()
 }
 
 // Scan scans the current row in rows to populate entry
-func (entry *DBEntry) scan(rows *sql.Rows) {
+func (entry *DBEntry) scan(rows *sql.Rows) error {
 	err := rows.Scan(
 		&entry.DN,
 		&entry.Parent,
@@ -34,49 +34,57 @@ func (entry *DBEntry) scan(rows *sql.Rows) {
 		&entry.Classes,
 		&entry.UserValues,
 		&entry.OperValues)
-	errors.CheckErr(err, "rows.Scan failed")
+	return err
 }
 
 // SelectAllNamingContexts returns a slice of DBEntry for all Naming Contexts
-func (dc *DataContext) SelectAllNamingContexts() DBEntries {
+func (dc *DataContext) SelectAllNamingContexts() (result DBEntries, err error) {
 	entries := make(DBEntries, 0)
 
 	rows, err := dc.DB.Query(sqlSelectAllNamingContexts)
-	errors.CheckErr(err, "Select failed")
-	entries.scan(rows)
+	if err != nil {
+		return nil, fmt.Errorf("SelectAllNamingContexts failed: %v", err)
+	}
 
-	return entries
+	entries.scan(rows)
+	return entries, nil
 }
 
 // SelectEntriesByDN returns a slice of DBEntry with a matching DN
-func (dc *DataContext) SelectEntriesByDN(dn string) DBEntries {
+func (dc *DataContext) SelectEntriesByDN(dn string) (result DBEntries, err error) {
 	entries := make(DBEntries, 0)
 
 	rows, err := dc.DB.Query(sqlSelectEntriesByDN, dn)
-	errors.CheckErr(err, "Select failed")
-	entries.scan(rows)
+	if err != nil {
+		return nil, fmt.Errorf("SelectEntriesByDN failed: %v", err)
+	}
 
-	return entries
+	entries.scan(rows)
+	return entries, nil
 }
 
 // SelectEntriesByParent returns a slice of DBEntry with a matching parent DN
-func (dc *DataContext) SelectEntriesByParent(parent string) DBEntries {
+func (dc *DataContext) SelectEntriesByParent(parent string) (result DBEntries, err error) {
 	entries := make(DBEntries, 0)
 
 	rows, err := dc.DB.Query(sqlSelectEntriesByParent, parent)
-	errors.CheckErr(err, "Select failed")
-	entries.scan(rows)
+	if err != nil {
+		return nil, fmt.Errorf("SelectEntriesByParent failed: %v", err)
+	}
 
-	return entries
+	entries.scan(rows)
+	return entries, nil
 }
 
 // SelectEntriesByParent returns a slice of DBEntry with a matching parent DN
-func (dc *DataContext) SelectEntryTreeByParent(parent string) DBEntries {
+func (dc *DataContext) SelectEntryTreeByParent(parent string) (result DBEntries, err error) {
 	entries := make(DBEntries, 0)
 
 	rows, err := dc.DB.Query(sqlSelectEntryTreeByParent, parent+"%")
-	errors.CheckErr(err, "Select failed")
-	entries.scan(rows)
+	if err != nil {
+		return nil, fmt.Errorf("SelectEntryTreeByParent failed: %v", err)
+	}
 
-	return entries
+	entries.scan(rows)
+	return entries, nil
 }
